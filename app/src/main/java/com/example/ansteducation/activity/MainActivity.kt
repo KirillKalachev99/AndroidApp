@@ -8,7 +8,9 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.example.ansteducation.CountFormat
 import com.example.ansteducation.R
+import com.example.ansteducation.adapter.PostAdapter
 import com.example.ansteducation.databinding.ActivityMainBinding
+import com.example.ansteducation.databinding.CardPostBinding
 import com.example.ansteducation.viewModel.PostViewModel
 
 class MainActivity : AppCompatActivity() {
@@ -16,9 +18,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val binding = ActivityMainBinding.inflate(layoutInflater)
+        val cardPostBinding = CardPostBinding.inflate(layoutInflater, binding.root, false)
 
         setContentView(binding.root)
-        binding.avatar.setImageResource(R.drawable.ic_netology_original_48dp)
+
+        cardPostBinding.avatar.setImageResource(R.drawable.ic_netology_original_48dp)
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -39,35 +43,19 @@ class MainActivity : AppCompatActivity() {
 
         val viewModel: PostViewModel by viewModels()
 
-        if (savedInstanceState == null) {
-            viewModel.view()
-        }
+        val adapter = PostAdapter({
+            viewModel.like(it.id)
+        }, {
+            viewModel.repost(it.id)
+        }, {
+            viewModel.view(it.id)
+        })
 
-        viewModel.data.observe(this) { post ->
-            with(binding) {
-                avatar.setImageResource(R.drawable.ic_netology_original_48dp)
-                author.text = post.author
-                published.text = post.published
-                content.text = post.content
-                likeCount.text = CountFormat.format(post.likes)
-                share.setImageResource(R.drawable.ic_share_24)
-                shareCount.text = CountFormat.format(post.shares)
-                seen.setImageResource(R.drawable.ic_eye_24)
-                seenCount.text = CountFormat.format(post.views)
-                if (post.liked) {
-                    like.setImageResource(R.drawable.ic_liked_24)
-                } else {
-                    like.setImageResource(R.drawable.ic_like_24)
-                }
-            }
-        }
+        binding.list.adapter = adapter
 
-        binding.like.setOnClickListener {
-            viewModel.like()
-        }
-
-        binding.share.setOnClickListener {
-            viewModel.repost()
+        viewModel.data.observe(this) { posts ->
+            adapter.list = posts
         }
     }
 }
+

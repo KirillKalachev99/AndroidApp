@@ -1,7 +1,7 @@
 package com.example.ansteducation.dto
 
 data class Post(
-    val id: String,
+    val id: Long,
     val author: String,
     val published: String,
     val content: String,
@@ -10,4 +10,5 @@ data class Post(
     val views: Int = 1,
     val sharedByMe: Boolean = false,
     val liked: Boolean = false,
+    var viewedByMe: Boolean = false
 )
