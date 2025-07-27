@@ -6,7 +6,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import com.example.ansteducation.CountFormat
 import com.example.ansteducation.R
 import com.example.ansteducation.adapter.PostAdapter
 import com.example.ansteducation.databinding.ActivityMainBinding
@@ -54,7 +53,7 @@ class MainActivity : AppCompatActivity() {
         binding.list.adapter = adapter
 
         viewModel.data.observe(this) { posts ->
-            adapter.list = posts
+            adapter.submitList(posts)
         }
     }
 }

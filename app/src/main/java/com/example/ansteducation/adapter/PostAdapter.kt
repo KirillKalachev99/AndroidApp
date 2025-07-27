@@ -1,8 +1,9 @@
 package com.example.ansteducation.adapter
 
-import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.ansteducation.CountFormat
 import com.example.ansteducation.R
@@ -18,25 +19,17 @@ typealias onItemViewListener = (post: Post) -> Unit
 class PostAdapter(
     private val onItemLikeListener: onItemLikeListener,
     private val onItemShareListener: onItemShareListener,
-    private val onItemViewListener: onItemViewListener? = null) :
-    RecyclerView.Adapter<PostViewHolder>() {
-
-    var list: List<Post> = emptyList()
-        @SuppressLint("NotifyDataSetChanged")
-        set(value) {
-            field = value
-            notifyDataSetChanged()
-        }
+    private val onItemViewListener: onItemViewListener? = null
+) :
+    ListAdapter<Post, PostViewHolder>(PostDiffCallback) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
         val binding = CardPostBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return PostViewHolder(binding, onItemLikeListener, onItemShareListener, onItemViewListener)
     }
 
-    override fun getItemCount(): Int = list.size
-
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
-        val post = list[position]
+        val post = getItem(position)
         holder.bind(post)
         holder.viewed(post)
     }
@@ -78,5 +71,15 @@ class PostViewHolder(
                 onItemViewListener?.invoke(post)
             }
         }
+    }
+}
+
+object PostDiffCallback : DiffUtil.ItemCallback<Post>() {
+    override fun areItemsTheSame(oldItem: Post, newItem: Post): Boolean {
+        return oldItem.id == newItem.id
+    }
+
+    override fun areContentsTheSame(oldItem: Post, newItem: Post): Boolean {
+        return oldItem == newItem
     }
 }
