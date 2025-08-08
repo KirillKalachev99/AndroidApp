@@ -52,8 +52,9 @@ class PostRepositoryInMemory : PostRepository {
             shares = 12,
             views = 1111
         )
+    ).reversed()
 
-    )
+    private var nextId = posts.maxOfOrNull { it.id }?.plus(1) ?: 1L
 
     private val _data = MutableLiveData(posts)
 
@@ -97,5 +98,19 @@ class PostRepositoryInMemory : PostRepository {
             } else post
         }
         _data.postValue(posts)
+    }
+
+    override fun removeById(id: Long) {
+        posts = posts.filter { it.id != id }
+        _data.value = posts
+    }
+
+    override fun save(post: Post) {
+        posts = if (post.id == 0L) {
+            listOf(post.copy(id = nextId++, author = "Me", published = "now")) + posts
+        } else {
+            posts.map { if (it.id != post.id) it else it.copy(content = post.content) }
+        }
+        _data.value = posts
     }
 }
