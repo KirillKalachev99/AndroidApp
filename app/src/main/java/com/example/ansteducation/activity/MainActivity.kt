@@ -97,6 +97,7 @@ class MainActivity : AppCompatActivity() {
                 content.setText("")
                 content.clearFocus()
                 AndroidUtils.hideKeyboard(content)
+                viewModel.clear()
             }
             save.setOnClickListener {
                 val text = binding.content.text.toString()
@@ -111,6 +112,7 @@ class MainActivity : AppCompatActivity() {
                 editGroup.visibility = View.GONE
                 editBorder.visibility = View.GONE
                 AndroidUtils.hideKeyboard(content)
+                viewModel.clear()
             }
         }
     }

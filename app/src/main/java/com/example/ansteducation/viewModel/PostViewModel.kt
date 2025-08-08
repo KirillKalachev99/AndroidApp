@@ -34,10 +34,14 @@ class PostViewModel : ViewModel() {
                 repository.save(it.copy(content = content))
             }
         }
-        edited.value = empty
+        clear()
     }
 
     fun edit(post: Post) {
         edited.value = post
+    }
+
+    fun clear(){
+        edited.value = empty
     }
 }
