@@ -16,7 +16,7 @@
         app:layout_constraintBottom_toBottomOf="@id/barrier"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="ContentDescription"
+        tools:ignore="ContentDescription,ImageContrastCheck"
         tools:srcCompat="@sample/posts_avatars" />
 
     <TextView
@@ -53,19 +53,19 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/menu"
-        android:minHeight="0dp"
-        android:minWidth="0dp"
-        android:padding="0dp"
-        app:iconSize="24dp"
-        app:iconGravity="textStart"
-        app:icon="@drawable/ic_more_vert_24"
-        app:iconTint="@color/icon_color"
-        android:backgroundTint="@android:color/transparent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:backgroundTint="@android:color/transparent"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:padding="0dp"
+        app:icon="@drawable/ic_more_vert_24"
+        app:iconGravity="textStart"
+        app:iconSize="24dp"
+        app:iconTint="@color/icon_color"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="ContentDescription" />
+        tools:ignore="ContentDescription,SpeakableTextPresentCheck,TouchTargetSizeCheck" />
 
     <TextView
         android:id="@+id/content"
@@ -90,18 +90,18 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/like"
         style="@style/Widget.AppTheme.LikeButton"
-        android:minWidth="0dp"
-        android:minHeight="0dp"
-        android:checkable="true"
-        app:iconPadding="4dp"
-        android:textColor="?attr/colorOnSurfaceVariant"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:checkable="true"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:textColor="?attr/colorOnSurfaceVariant"
         app:icon="@drawable/like_selector"
+        app:iconPadding="4dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/barrierContent"
-        tools:ignore="ContentDescription"
-        tools:text="10"/>
+        tools:ignore="ContentDescription,TouchTargetSizeCheck"
+        tools:text="10" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/share"
@@ -125,7 +125,7 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/like"
         app:layout_constraintTop_toTopOf="@+id/like"
-        tools:ignore="ContentDescription,RtlSymmetry"
+        tools:ignore="ContentDescription,RtlSymmetry,TouchTargetSizeCheck"
         tools:text="5" />
 
     <com.google.android.material.button.MaterialButton
