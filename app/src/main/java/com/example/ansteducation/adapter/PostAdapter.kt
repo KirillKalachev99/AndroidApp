@@ -1,6 +1,10 @@
 package com.example.ansteducation.adapter
 
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.net.Uri
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
 import androidx.recyclerview.widget.DiffUtil
@@ -45,6 +49,7 @@ class PostViewHolder(
     private val onItemViewListener: onItemViewListener?,
 ) : RecyclerView.ViewHolder(binding.root) {
 
+    @SuppressLint("UseKtx")
     fun bind(post: Post) {
         binding.apply {
             avatar.setImageResource(R.drawable.ic_netology_original_48dp)
@@ -74,13 +79,29 @@ class PostViewHolder(
                                 onInteractionListener.edit(post)
                                 true
                             }
-
                             else -> false
                         }
                     }
                 }.show()
             }
+            if (!post.video.isNullOrBlank()) {
+                video.visibility = View.VISIBLE
+                play.visibility = View.VISIBLE
+                video.setImageResource(R.drawable.preview_video)
 
+                video.setOnClickListener {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(post.video))
+                    itemView.context.startActivity(intent)
+                }
+
+                play.setOnClickListener {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(post.video))
+                    itemView.context.startActivity(intent)
+                }
+            } else {
+                video.visibility = View.GONE
+                play.visibility = View.GONE
+            }
         }
     }
 
@@ -99,6 +120,6 @@ object PostDiffCallback : DiffUtil.ItemCallback<Post>() {
     }
 
     override fun areContentsTheSame(oldItem: Post, newItem: Post): Boolean {
-        return oldItem == newItem
+        return oldItem == newItem && oldItem.video == newItem.video
     }
 }

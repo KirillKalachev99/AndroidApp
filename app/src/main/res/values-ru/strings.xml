@@ -6,5 +6,6 @@
     <string name="menu_edit">Редактировать</string>
     <string name="error_empty_content">Содержание не может быть пустым</string>
     <string name="post_text">Текст поста</string>
+    <string name="chooser_share_post">Поделиться постом</string>
     <string name="edit_message_text">Редактировать текст</string>
 </resources>

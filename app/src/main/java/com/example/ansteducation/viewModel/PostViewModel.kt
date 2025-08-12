@@ -30,7 +30,9 @@ class PostViewModel : ViewModel() {
     fun save(text: String) {
         edited.value?.let {
             val content = text.trim()
-            if (content != it.content){
+            if (it.id == 0L) {
+                repository.save(empty.copy(content = content))
+            } else {
                 repository.save(it.copy(content = content))
             }
         }

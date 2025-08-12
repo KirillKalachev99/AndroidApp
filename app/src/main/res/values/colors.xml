@@ -3,5 +3,8 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="icon_color">#5B5B5B</color>
+    <color name="confirm_button_color">#A5D6A7</color>
+    <color name="bottom_appbar_color">#CE93D8</color>
+    <color name="hint_color">#546E7A</color>
 
 </resources>
