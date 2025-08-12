@@ -2,6 +2,7 @@ package com.example.ansteducation.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.appcompat.widget.PopupMenu
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -10,22 +11,25 @@ import com.example.ansteducation.R
 import com.example.ansteducation.databinding.CardPostBinding
 import com.example.ansteducation.dto.Post
 
+interface OnInteractionListener {
 
-typealias onItemLikeListener = (post: Post) -> Unit
-typealias onItemShareListener = (post: Post) -> Unit
+    fun like(post: Post)
+    fun share(post: Post)
+    fun remove(post: Post)
+    fun edit(post: Post)
+}
+
 typealias onItemViewListener = (post: Post) -> Unit
 
-
 class PostAdapter(
-    private val onItemLikeListener: onItemLikeListener,
-    private val onItemShareListener: onItemShareListener,
-    private val onItemViewListener: onItemViewListener? = null
+    private val onInteractionListener: OnInteractionListener,
+    private val onItemViewListener: onItemViewListener? = null,
 ) :
     ListAdapter<Post, PostViewHolder>(PostDiffCallback) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
         val binding = CardPostBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return PostViewHolder(binding, onItemLikeListener, onItemShareListener, onItemViewListener)
+        return PostViewHolder(binding, onInteractionListener, onItemViewListener)
     }
 
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
@@ -37,9 +41,8 @@ class PostAdapter(
 
 class PostViewHolder(
     private val binding: CardPostBinding,
-    private val onItemLikeListener: onItemLikeListener,
-    private val onItemShareListener: onItemShareListener,
-    private val onItemViewListener: onItemViewListener?
+    private val onInteractionListener: OnInteractionListener,
+    private val onItemViewListener: onItemViewListener?,
 ) : RecyclerView.ViewHolder(binding.root) {
 
     fun bind(post: Post) {
@@ -48,20 +51,36 @@ class PostViewHolder(
             author.text = post.author
             published.text = post.published
             content.text = post.content
-            likeCount.text = CountFormat.format(post.likes)
-            shareCount.text = CountFormat.format(post.shares)
-            seenCount.text = CountFormat.format(post.views)
-            if (post.liked) {
-                like.setImageResource(R.drawable.ic_liked_24)
-            } else {
-                like.setImageResource(R.drawable.ic_like_24)
-            }
+            like.text = CountFormat.format(post.likes)
+            share.text = CountFormat.format(post.shares)
+            seen.text = CountFormat.format(post.views)
+            like.isChecked = post.liked
             like.setOnClickListener {
-                onItemLikeListener(post)
+                onInteractionListener.like(post)
             }
             share.setOnClickListener {
-                onItemShareListener(post)
+                onInteractionListener.share(post)
             }
+            menu.setOnClickListener {
+                PopupMenu(it.context, it).apply {
+                    inflate(R.menu.menu_post)
+                    setOnMenuItemClickListener { item ->
+                        when (item.itemId) {
+                            R.id.remove -> {
+                                onInteractionListener.remove(post)
+                                true
+                            }
+                            R.id.edit -> {
+                                onInteractionListener.edit(post)
+                                true
+                            }
+
+                            else -> false
+                        }
+                    }
+                }.show()
+            }
+
         }
     }
 
