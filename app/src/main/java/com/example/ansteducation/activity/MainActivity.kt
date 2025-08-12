@@ -1,7 +1,10 @@
 package com.example.ansteducation.activity
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.activity.enableEdgeToEdge
@@ -15,6 +18,7 @@ import com.example.ansteducation.databinding.ActivityMainBinding
 import com.example.ansteducation.databinding.CardPostBinding
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.viewModel.PostViewModel
+import androidx.core.net.toUri
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,6 +81,11 @@ class MainActivity : AppCompatActivity() {
             override fun edit(post: Post) {
                 editPostLauncher.launch(post.content)
                 viewModel.edit(post)
+                viewModel.clear()
+            }
+
+            override fun playVideo(videoUrl: String) {
+                openVideoUrl(videoUrl)
             }
         }) {
             viewModel.view(it.id)
@@ -94,6 +103,11 @@ class MainActivity : AppCompatActivity() {
         binding.add.setOnClickListener {
             newPostLauncher.launch()
         }
+    }
+
+    private fun openVideoUrl(url: String) {
+        val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+        startActivity(intent)
     }
 }
 

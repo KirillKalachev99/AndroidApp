@@ -1,8 +1,6 @@
 package com.example.ansteducation.adapter
 
 import android.annotation.SuppressLint
-import android.content.Intent
-import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,6 +19,7 @@ interface OnInteractionListener {
     fun share(post: Post)
     fun remove(post: Post)
     fun edit(post: Post)
+    fun playVideo(url: String)
 }
 
 typealias onItemViewListener = (post: Post) -> Unit
@@ -89,15 +88,12 @@ class PostViewHolder(
                 play.visibility = View.VISIBLE
                 video.setImageResource(R.drawable.preview_video)
 
-                video.setOnClickListener {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(post.video))
-                    itemView.context.startActivity(intent)
+                val videoClickListener = View.OnClickListener {
+                    onInteractionListener.playVideo(post.video!!)
                 }
 
-                play.setOnClickListener {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(post.video))
-                    itemView.context.startActivity(intent)
-                }
+                video.setOnClickListener(videoClickListener)
+                play.setOnClickListener(videoClickListener)
             } else {
                 video.visibility = View.GONE
                 play.visibility = View.GONE
