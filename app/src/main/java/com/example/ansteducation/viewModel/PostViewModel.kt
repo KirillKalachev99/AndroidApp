@@ -1,11 +1,12 @@
 package com.example.ansteducation.viewModel
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.repository.PostRepository
-import com.example.ansteducation.repository.PostRepositoryInMemory
+import com.example.ansteducation.repository.PostRepositoryFileImpl
 
 
 private val empty = Post(
@@ -15,9 +16,9 @@ private val empty = Post(
     published = ""
 )
 
-class PostViewModel : ViewModel() {
+class PostViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository: PostRepository = PostRepositoryInMemory()
+    private val repository: PostRepository = PostRepositoryFileImpl(application)
 
     val data: LiveData<List<Post>> = repository.get()
     val edited = MutableLiveData(empty)

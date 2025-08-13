@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val viewModel: PostViewModel by viewModels()
+
         val newPostLauncher = registerForActivityResult(NewPostContract) { result ->
             result ?: return@registerForActivityResult
             viewModel.save(result)
