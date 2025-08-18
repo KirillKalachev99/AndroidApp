@@ -1,34 +1,39 @@
 package com.example.ansteducation.activity
 
+import android.R.attr.text
 import android.content.Intent
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
-import androidx.activity.result.launch
-import androidx.appcompat.app.AppCompatActivity
 import com.example.ansteducation.R
 import com.example.ansteducation.adapter.OnInteractionListener
 import com.example.ansteducation.adapter.PostAdapter
-import com.example.ansteducation.databinding.ActivityMainBinding
 import com.example.ansteducation.databinding.CardPostBinding
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.viewModel.PostViewModel
 import androidx.core.net.toUri
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
+import com.example.ansteducation.activity.AppActivity.Companion.textArg
+import com.example.ansteducation.databinding.FragmentFeedBinding
 
-class MainActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        val binding = ActivityMainBinding.inflate(layoutInflater)
+class FeedFragment : Fragment() {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+
+        val binding = FragmentFeedBinding.inflate(inflater, container, false)
         val cardPostBinding = CardPostBinding.inflate(layoutInflater, binding.root, false)
-
-        setContentView(binding.root)
 
         cardPostBinding.avatar.setImageResource(R.drawable.ic_netology_original_48dp)
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.navHostFragment) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val horizontalPadding =
                 systemBars.left + resources.getDimensionPixelSize(R.dimen.common_margin)
@@ -45,16 +50,9 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        val viewModel: PostViewModel by viewModels()
-
-        val newPostLauncher = registerForActivityResult(NewPostContract) { result ->
-            result ?: return@registerForActivityResult
-            viewModel.save(result)
-        }
-        val editPostLauncher = registerForActivityResult(EditPostContract) { result ->
-            result ?: return@registerForActivityResult
-            viewModel.save(result)
-        }
+        val viewModel: PostViewModel by viewModels(
+            ownerProducer = ::requireParentFragment
+        )
 
         val adapter = PostAdapter(object : OnInteractionListener {
             override fun like(post: Post) {
@@ -77,8 +75,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun edit(post: Post) {
-                editPostLauncher.launch(post.content)
                 viewModel.edit(post)
+                findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
             }
 
             override fun playVideo(videoUrl: String) {
@@ -90,7 +88,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.list.adapter = adapter
 
-        viewModel.data.observe(this) { posts ->
+        viewModel.data.observe(viewLifecycleOwner) { posts ->
             val new = posts.size > adapter.currentList.size && adapter.currentList.isNotEmpty()
             adapter.submitList(posts) {
                 if (new) binding.list.smoothScrollToPosition(0)
@@ -98,9 +96,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.add.setOnClickListener {
-            newPostLauncher.launch()
+            findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
             viewModel.clear()
         }
+
+        return binding.root
     }
 
     private fun openVideoUrl(url: String) {

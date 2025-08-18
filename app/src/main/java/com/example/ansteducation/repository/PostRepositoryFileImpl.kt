@@ -1,6 +1,7 @@
 package com.example.ansteducation.repository
 
 import android.content.Context
+import android.provider.Telephony.Mms.Part.FILENAME
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.ansteducation.dto.Post
@@ -9,7 +10,9 @@ import com.google.gson.reflect.TypeToken
 
 class PostRepositoryFileImpl(private val context: Context) : PostRepository {
 
-    private var posts = listOf<Post>()
+    val postWithVideo = Post(9999999, "Me", "now", "Описание поста с видео", video = VIDEO_URL)
+
+    private var posts = listOf<Post>(postWithVideo)
         set(value) {
             field = value
             sync()
@@ -93,6 +96,7 @@ class PostRepositoryFileImpl(private val context: Context) : PostRepository {
     }
 
     companion object {
+        private const val VIDEO_URL = "https://rutube.ru/video/c6cc4d620b1d4338901770a44b3e82f4/https://rutube.ru/video/c6cc4d620b1d4338901770a44b3e82f4/"
         private const val FILENAME = "posts.json"
         private val gson = Gson()
         private val type = TypeToken.getParameterized(List::class.java, Post::class.java).type
