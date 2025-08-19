@@ -40,10 +40,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         clear()
     }
 
-    fun get(id: Long): List<Post>{
-        return repository.getPostById(id)
-    }
-
     fun edit(post: Post) {
         edited.value = post
     }
@@ -51,5 +47,4 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     fun clear(){
         edited.value = empty
     }
-
 }

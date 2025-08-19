@@ -10,16 +10,14 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.ansteducation.R
 import com.example.ansteducation.adapter.OnInteractionListener
 import com.example.ansteducation.adapter.PostAdapter
-import com.example.ansteducation.databinding.CardPostBinding
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.viewModel.PostViewModel
 import androidx.core.net.toUri
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.example.ansteducation.activity.AppActivity.Companion.textArg
 import com.example.ansteducation.databinding.FragmentFeedBinding
-import com.example.ansteducation.databinding.FragmentSingleBinding
 
 class FeedFragment : Fragment() {
     override fun onCreateView(
@@ -29,16 +27,12 @@ class FeedFragment : Fragment() {
     ): View {
 
         val binding = FragmentFeedBinding.inflate(inflater, container, false)
-        val cardPostBinding = CardPostBinding.inflate(inflater, binding.root, false)
-        val singlePostBinding = FragmentSingleBinding.inflate(inflater, binding.root, false)
-
-        cardPostBinding.avatar.setImageResource(R.drawable.ic_netology_original_48dp)
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.navHostFragment) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val horizontalPadding =
                 systemBars.left + resources.getDimensionPixelSize(R.dimen.common_margin)
-            val topPadding = systemBars.top
+            val topPadding = systemBars.top + resources.getDimensionPixelSize(R.dimen.common_margin)
             val bottomPadding =
                 systemBars.bottom + resources.getDimensionPixelSize(R.dimen.common_margin)
 
@@ -61,13 +55,7 @@ class FeedFragment : Fragment() {
             }
 
             override fun share(post: Post) {
-                val intent = Intent().apply {
-                    action = Intent.ACTION_SEND
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, post.content)
-                }
-                val chooser = Intent.createChooser(intent, getString(R.string.chooser_share_post))
-                startActivity(chooser)
+                sharePost(post)
                 viewModel.repost(post.id)
             }
 
@@ -80,12 +68,15 @@ class FeedFragment : Fragment() {
                 findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
             }
 
-            override fun onPostClick(post: Post) {
-                findNavController().navigate(R.id.action_feedFragment_to_singlePostFragment)
-            }
-
             override fun playVideo(videoUrl: String) {
                 openVideoUrl(videoUrl)
+            }
+
+            override fun onPostClick(post: Post) {
+                findNavController().navigate(
+                    R.id.action_feedFragment_to_singlePostFragment,
+                    bundleOf("postId" to post.id)
+                )
             }
         }) {
             viewModel.view(it.id)
@@ -105,15 +96,16 @@ class FeedFragment : Fragment() {
             viewModel.clear()
         }
 
-        cardPostBinding.apply {
-            postCard.setOnClickListener{
-                val post = viewModel.get(it.id.toLong())
-                viewModel.edit(post.first())
-                    findNavController().navigate(R.id.action_feedFragment_to_singlePostFragment)
-            }
-        }
-
         return binding.root
+    }
+
+    private fun sharePost(post: Post) {
+        val intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, post.content)
+        }
+        startActivity(Intent.createChooser(intent, getString(R.string.chooser_share_post)))
     }
 
     private fun openVideoUrl(url: String) {

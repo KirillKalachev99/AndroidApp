@@ -26,16 +26,11 @@
         android:id="@+id/singlePostFragment"
         android:name="com.example.ansteducation.activity.SinglePostFragment"
         android:label="SinglePostFragment" >
-
-        <argument
-            android:name="postId"
-            app:argType="long" />
-
-        <action
-            android:id="@+id/action_singlePostFragment_to_feedFragment"
-            app:destination="@id/feedFragment" />
         <action
             android:id="@+id/action_singlePostFragment_to_newPostFragment"
             app:destination="@id/newPostFragment" />
+        <action
+            android:id="@+id/action_singlePostFragment_to_feedFragment"
+            app:destination="@id/feedFragment" />
     </fragment>
 </navigation>

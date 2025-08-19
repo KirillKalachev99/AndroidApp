@@ -1,18 +1,18 @@
 package com.example.ansteducation.repository
 
 import android.content.Context
-import android.provider.Telephony.Mms.Part.FILENAME
+import androidx.core.content.edit
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.ansteducation.dto.Post
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
-class PostRepositoryFileImpl(private val context: Context) : PostRepository {
+class PostRepositorySharedPrefsImpl(context: Context) : PostRepository {
 
-    val postWithVideo = Post(9999999, "Me", "now", "Описание поста с видео", video = VIDEO_URL)
+    val prefs = context.getSharedPreferences("repo",Context.MODE_PRIVATE)
 
-    private var posts = listOf<Post>(postWithVideo)
+    private var posts = listOf<Post>()
         set(value) {
             field = value
             sync()
@@ -23,19 +23,16 @@ class PostRepositoryFileImpl(private val context: Context) : PostRepository {
     private val _data = MutableLiveData(posts)
 
     init {
-        val file = context.filesDir.resolve(FILENAME)
-        if (file.exists()) {
-            context.openFileInput(FILENAME).bufferedReader().use {
-                posts = gson.fromJson(it, type)
-                nextId = posts.maxOfOrNull { it.id }?.inc() ?: 1L
-                _data.value = posts
-            }
+        prefs.getString(KEY_POSTS, null)?.let {
+            posts = gson.fromJson(it, type)
+            nextId = posts.maxOfOrNull { it.id }?.inc() ?: 1
+            _data.value = posts
         }
     }
 
     private fun sync() {
-        context.openFileOutput(FILENAME, Context.MODE_PRIVATE).bufferedWriter().use {
-            it.write(gson.toJson(posts))
+        prefs.edit {
+            putString(KEY_POSTS, gson.toJson(posts))
         }
     }
 
@@ -96,8 +93,7 @@ class PostRepositoryFileImpl(private val context: Context) : PostRepository {
     }
 
     companion object {
-        private const val VIDEO_URL = "https://rutube.ru/video/c6cc4d620b1d4338901770a44b3e82f4/https://rutube.ru/video/c6cc4d620b1d4338901770a44b3e82f4/"
-        private const val FILENAME = "posts.json"
+        private const val KEY_POSTS = "posts"
         private val gson = Gson()
         private val type = TypeToken.getParameterized(List::class.java, Post::class.java).type
     }

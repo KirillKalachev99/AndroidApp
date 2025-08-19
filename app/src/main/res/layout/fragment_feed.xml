@@ -5,7 +5,7 @@
     android:id="@+id/nav_host_fragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activity.AppActivity">
+    tools:context=".activity.FeedFragment">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/list"

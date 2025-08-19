@@ -1,53 +1,84 @@
 package com.example.ansteducation.activity
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.ansteducation.R
 import com.example.ansteducation.adapter.OnInteractionListener
 import com.example.ansteducation.adapter.PostViewHolder
-import com.example.ansteducation.adapter.onItemViewListener
-import com.example.ansteducation.databinding.CardPostBinding
-import com.example.ansteducation.databinding.FragmentSingleBinding
+import com.example.ansteducation.databinding.FragmentSinglePostBinding
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.viewModel.PostViewModel
 
-class SinglePostFragment : Fragment() {
+class SinglePostFragment: Fragment() {
 
-    private val viewModel: PostViewModel by viewModels()
+    private val viewModel: PostViewModel by viewModels(
+        ownerProducer = ::requireParentFragment
+    )
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        val binding = FragmentSingleBinding.inflate(inflater, container, false)
+    ): View? {
+        val binding = FragmentSinglePostBinding.inflate(inflater, container, false)
 
-        PostViewHolder(
-            binding.postCard,
-            object : OnInteractionListener{
+        val postId = arguments?.getLong("postId") ?: findNavController().navigateUp()
+
+        var postVh = PostViewHolder(binding.singlePost,
+            object : OnInteractionListener {
+                override fun like(post: Post) {
+                    viewModel.like(post.id)
+                }
+
+                override fun share(post: Post) {
+                    viewModel.repost(post.id)
+                    sharePost(post)
+                }
 
                 override fun remove(post: Post) {
                     viewModel.remove(post.id)
-                    findNavController().navigate(R.id.action_singlePostFragment_to_feedFragment)
-                    viewModel.clear()
+                    findNavController().navigateUp()
                 }
 
                 override fun edit(post: Post) {
                     viewModel.edit(post)
                     findNavController().navigate(R.id.action_singlePostFragment_to_newPostFragment)
                 }
-            },
-            object : onItemViewListener{
-                override fun invoke(post: Post) {
-                    this.invoke(post)
+
+                override fun playVideo(url: String) {
+                    openVideoUrl(url)
                 }
-            })
+
+            }, null)
+
+        viewModel.data.observe(viewLifecycleOwner) { posts ->
+            val post = posts.find { it.id == postId }
+            post?.let {
+            postVh.bind(it)
+            }
+        }
 
         return binding.root
-     }
+    }
+
+    private fun sharePost(post: Post) {
+        val intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, post.content)
+        }
+        startActivity(Intent.createChooser(intent, getString(R.string.chooser_share_post)))
+    }
+
+    private fun openVideoUrl(url: String) {
+        val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+        startActivity(intent)
+    }
 }

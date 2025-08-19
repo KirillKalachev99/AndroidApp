@@ -14,21 +14,12 @@ import com.example.ansteducation.databinding.CardPostBinding
 import com.example.ansteducation.dto.Post
 
 interface OnInteractionListener {
-
-    fun like(post: Post){
-        like(post)
-    }
-    fun share(post: Post){
-        share(post)
-    }
+    fun like(post: Post)
+    fun share(post: Post)
     fun remove(post: Post)
     fun edit(post: Post)
-    fun playVideo(url: String){
-        playVideo(url)
-    }
-    fun onPostClick(post: Post){
-        onPostClick(post)
-    }
+    fun playVideo(url: String)
+    fun onPostClick(post: Post){}
 }
 
 typealias onItemViewListener = (post: Post) -> Unit
@@ -47,11 +38,6 @@ class PostAdapter(
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
         val post = getItem(position)
         holder.bind(post)
-
-        holder.itemView.setOnClickListener {
-            onInteractionListener.onPostClick(post)
-        }
-
         holder.viewed(post)
     }
 }
@@ -111,6 +97,10 @@ class PostViewHolder(
             } else {
                 video.visibility = View.GONE
                 play.visibility = View.GONE
+            }
+
+            root.setOnClickListener {
+                onInteractionListener.onPostClick(post)
             }
         }
     }
