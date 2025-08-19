@@ -1,6 +1,5 @@
 package com.example.ansteducation.activity
 
-import android.R.attr.text
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -20,6 +19,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.ansteducation.activity.AppActivity.Companion.textArg
 import com.example.ansteducation.databinding.FragmentFeedBinding
+import com.example.ansteducation.databinding.FragmentSingleBinding
 
 class FeedFragment : Fragment() {
     override fun onCreateView(
@@ -29,7 +29,8 @@ class FeedFragment : Fragment() {
     ): View {
 
         val binding = FragmentFeedBinding.inflate(inflater, container, false)
-        val cardPostBinding = CardPostBinding.inflate(layoutInflater, binding.root, false)
+        val cardPostBinding = CardPostBinding.inflate(inflater, binding.root, false)
+        val singlePostBinding = FragmentSingleBinding.inflate(inflater, binding.root, false)
 
         cardPostBinding.avatar.setImageResource(R.drawable.ic_netology_original_48dp)
 
@@ -37,7 +38,7 @@ class FeedFragment : Fragment() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val horizontalPadding =
                 systemBars.left + resources.getDimensionPixelSize(R.dimen.common_margin)
-            val topPadding = systemBars.top + resources.getDimensionPixelSize(R.dimen.common_margin)
+            val topPadding = systemBars.top
             val bottomPadding =
                 systemBars.bottom + resources.getDimensionPixelSize(R.dimen.common_margin)
 
@@ -79,6 +80,10 @@ class FeedFragment : Fragment() {
                 findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
             }
 
+            override fun onPostClick(post: Post) {
+                findNavController().navigate(R.id.action_feedFragment_to_singlePostFragment)
+            }
+
             override fun playVideo(videoUrl: String) {
                 openVideoUrl(videoUrl)
             }
@@ -98,6 +103,14 @@ class FeedFragment : Fragment() {
         binding.add.setOnClickListener {
             findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
             viewModel.clear()
+        }
+
+        cardPostBinding.apply {
+            postCard.setOnClickListener{
+                val post = viewModel.get(it.id.toLong())
+                viewModel.edit(post.first())
+                    findNavController().navigate(R.id.action_feedFragment_to_singlePostFragment)
+            }
         }
 
         return binding.root

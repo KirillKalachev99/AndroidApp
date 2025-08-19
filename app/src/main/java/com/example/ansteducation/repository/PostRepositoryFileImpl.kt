@@ -1,7 +1,6 @@
 package com.example.ansteducation.repository
 
 import android.content.Context
-import android.provider.Telephony.Mms.Part.FILENAME
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.ansteducation.dto.Post
@@ -37,6 +36,10 @@ class PostRepositoryFileImpl(private val context: Context) : PostRepository {
         context.openFileOutput(FILENAME, Context.MODE_PRIVATE).bufferedWriter().use {
             it.write(gson.toJson(posts))
         }
+    }
+
+    override fun getPostById(id: Long): List<Post>{
+        return posts.filter { it.id == id }
     }
 
     override fun get(): LiveData<List<Post>> = _data
