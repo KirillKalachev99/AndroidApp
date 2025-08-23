@@ -65,8 +65,8 @@ class PostRepositoryInMemory : PostRepository {
         posts = posts.map { post ->
             if (post.id == id) {
                 post.copy(
-                    liked = !post.liked,
-                    likes = if (post.liked) {
+                    likedByMe = !post.likedByMe,
+                    likes = if (post.likedByMe) {
                         post.likes - 1
                     } else {
                         post.likes + 1
@@ -77,7 +77,7 @@ class PostRepositoryInMemory : PostRepository {
         _data.value = posts
     }
 
-    override fun repostById(id: Long) {
+    override fun shareById(id: Long) {
         posts = posts.map { post ->
             if (post.id == id && !post.sharedByMe) {
                 post.copy(

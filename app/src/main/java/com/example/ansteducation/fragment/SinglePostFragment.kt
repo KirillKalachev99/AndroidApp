@@ -1,4 +1,4 @@
-package com.example.ansteducation.activity
+package com.example.ansteducation.fragment
 
 import android.content.Intent
 import android.os.Bundle

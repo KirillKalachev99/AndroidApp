@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/feedFragment"
-        android:name="com.example.ansteducation.activity.FeedFragment"
+        android:name="com.example.ansteducation.fragment.FeedFragment"
         android:label="fragment_feed"
         tools:layout="@layout/fragment_feed" >
         <action
@@ -19,12 +19,12 @@
     </fragment>
     <fragment
         android:id="@+id/newPostFragment"
-        android:name="com.example.ansteducation.activity.NewPostFragment"
+        android:name="com.example.ansteducation.fragment.NewPostFragment"
         android:label="fragment_new_post"
         tools:layout="@layout/fragment_new_post" />
     <fragment
         android:id="@+id/singlePostFragment"
-        android:name="com.example.ansteducation.activity.SinglePostFragment"
+        android:name="com.example.ansteducation.fragment.SinglePostFragment"
         android:label="SinglePostFragment" >
         <action
             android:id="@+id/action_singlePostFragment_to_newPostFragment"

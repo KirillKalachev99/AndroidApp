@@ -58,7 +58,7 @@ class PostViewHolder(
             like.text = CountFormat.format(post.likes)
             share.text = CountFormat.format(post.shares)
             seen.text = CountFormat.format(post.views)
-            like.isChecked = post.liked
+            like.isChecked = post.likedByMe
             like.setOnClickListener {
                 onInteractionListener.like(post)
             }

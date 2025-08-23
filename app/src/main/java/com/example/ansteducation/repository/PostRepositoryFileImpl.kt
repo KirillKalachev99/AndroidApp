@@ -1,7 +1,6 @@
 package com.example.ansteducation.repository
 
 import android.content.Context
-import android.provider.Telephony.Mms.Part.FILENAME
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.ansteducation.dto.Post
@@ -45,8 +44,8 @@ class PostRepositoryFileImpl(private val context: Context) : PostRepository {
         posts = posts.map { post ->
             if (post.id == id) {
                 post.copy(
-                    liked = !post.liked,
-                    likes = if (post.liked) {
+                    likedByMe = !post.likedByMe,
+                    likes = if (post.likedByMe) {
                         post.likes - 1
                     } else {
                         post.likes + 1
@@ -57,7 +56,7 @@ class PostRepositoryFileImpl(private val context: Context) : PostRepository {
         _data.value = posts
     }
 
-    override fun repostById(id: Long) {
+    override fun shareById(id: Long) {
         posts = posts.map { post ->
             if (post.id == id && !post.sharedByMe) {
                 post.copy(

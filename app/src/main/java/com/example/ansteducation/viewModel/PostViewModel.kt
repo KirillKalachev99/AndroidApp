@@ -4,10 +4,10 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.ansteducation.db.AppDb
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.repository.PostRepository
-import com.example.ansteducation.repository.PostRepositoryFileImpl
-
+import com.example.ansteducation.repository.PostRepositorySQLiteImpl
 
 private val empty = Post(
     id = 0,
@@ -18,13 +18,15 @@ private val empty = Post(
 
 class PostViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository: PostRepository = PostRepositoryFileImpl(application)
+    private val repository: PostRepository = PostRepositorySQLiteImpl(
+        AppDb.getInstance(application).postDao
+    )
 
     val data: LiveData<List<Post>> = repository.get()
     val edited = MutableLiveData(empty)
 
     fun like(id: Long) = repository.likeById(id)
-    fun repost(id: Long) = repository.repostById(id)
+    fun repost(id: Long) = repository.shareById(id)
     fun view(id: Long) = repository.viewById(id)
     fun remove(id: Long) = repository.removeById(id)
 
@@ -47,4 +49,5 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     fun clear(){
         edited.value = empty
     }
+
 }

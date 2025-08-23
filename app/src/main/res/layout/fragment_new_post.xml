@@ -6,7 +6,7 @@
     android:fitsSystemWindows="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activity.NewPostFragment">
+    tools:context=".fragment.NewPostFragment">
 
     <EditText
         android:id="@+id/content"

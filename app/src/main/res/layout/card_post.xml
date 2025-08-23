@@ -9,7 +9,7 @@
     android:layout_height="wrap_content"
     android:focusable="true"
     android:padding="@dimen/common_margin"
-    tools:context=".activity.FeedFragment">
+    tools:context=".fragment.FeedFragment">
 
     <ImageView
         android:id="@+id/avatar"

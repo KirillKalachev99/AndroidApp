@@ -1,4 +1,4 @@
-package com.example.ansteducation.activity
+package com.example.ansteducation.fragment
 
 import android.R
 import android.os.Bundle
@@ -20,6 +20,7 @@ class NewPostFragment : Fragment() {
     private val viewModel: PostViewModel by viewModels(
         ownerProducer = ::requireParentFragment
     )
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
