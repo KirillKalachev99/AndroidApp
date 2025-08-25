@@ -92,6 +92,10 @@ class PostRepositorySharedPrefsImpl(context: Context) : PostRepository {
         _data.value = posts
     }
 
+    override fun addVideoPost(post: Post) {
+        TODO("Not yet implemented")
+    }
+
     companion object {
         private const val KEY_POSTS = "posts"
         private val gson = Gson()

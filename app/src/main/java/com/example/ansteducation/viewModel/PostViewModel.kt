@@ -7,7 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import com.example.ansteducation.db.AppDb
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.repository.PostRepository
-import com.example.ansteducation.repository.PostRepositorySQLiteImpl
+import com.example.ansteducation.repository.PostRepositoryImpl
 
 private val empty = Post(
     id = 0,
@@ -16,10 +16,19 @@ private val empty = Post(
     published = ""
 )
 
+
 class PostViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository: PostRepository = PostRepositorySQLiteImpl(
-        AppDb.getInstance(application).postDao
+    val postWithVideo = Post(
+        id = 5,
+        author = "Me",
+        published = "Now",
+        content = "Описание поста с видео",
+        video = "https://rutube.ru/video/c6cc4d620b1d4338901770a44b3e82f4/"
+    )
+
+    private val repository: PostRepository = PostRepositoryImpl(
+        AppDb.getInstance(application).postDao()
     )
 
     val data: LiveData<List<Post>> = repository.get()
@@ -48,6 +57,10 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clear(){
         edited.value = empty
+    }
+
+    fun addVideoPost(post: Post){
+        repository.addVideoPost(post)
     }
 
 }

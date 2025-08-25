@@ -94,6 +94,10 @@ class PostRepositoryFileImpl(private val context: Context) : PostRepository {
         _data.value = posts
     }
 
+    override fun addVideoPost(post: Post) {
+        TODO("Not yet implemented")
+    }
+
     companion object {
         private const val VIDEO_URL = "https://rutube.ru/video/c6cc4d620b1d4338901770a44b3e82f4/https://rutube.ru/video/c6cc4d620b1d4338901770a44b3e82f4/"
         private const val FILENAME = "posts.json"

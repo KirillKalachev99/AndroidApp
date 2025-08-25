@@ -49,6 +49,15 @@ class FeedFragment : Fragment() {
             ownerProducer = ::requireParentFragment
         )
 
+        viewModel.data.observe(viewLifecycleOwner) { posts ->
+            val postWithVideo = viewModel.postWithVideo
+            val videoPostExists = posts.any { it.id == postWithVideo.id }
+
+            if (!videoPostExists) {
+                viewModel.addVideoPost(postWithVideo)
+            }
+        }
+
         val adapter = PostAdapter(object : OnInteractionListener {
             override fun like(post: Post) {
                 viewModel.like(post.id)

@@ -114,4 +114,8 @@ class PostRepositoryInMemory : PostRepository {
         }
         _data.value = posts
     }
+
+    override fun addVideoPost(post: Post) {
+        TODO("Not yet implemented")
+    }
 }
