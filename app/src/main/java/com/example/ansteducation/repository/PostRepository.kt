@@ -2,7 +2,6 @@ package com.example.ansteducation.repository
 
 import androidx.lifecycle.LiveData
 import com.example.ansteducation.dto.Post
-import com.example.ansteducation.entity.PostEntity
 
 interface PostRepository {
     fun get(): LiveData<List<Post>>
