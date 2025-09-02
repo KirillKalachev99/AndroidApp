@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("kotlin-kapt")
+    id 'com.google.gms.google-services'
 }
 
 android {
@@ -38,6 +39,8 @@ android {
 }
 
 dependencies {
+    def play_services_base_version = "18.5.0"
+
 
     implementation libs.gson
     implementation libs.androidx.core.ktx
@@ -55,5 +58,7 @@ dependencies {
     implementation libs.room.runtime
     implementation libs.room.ktx
     kapt libs.room.compiler
-
+    implementation platform('com.google.firebase:firebase-bom:34.0.0')
+    implementation libs.firebase.messaging.ktx
+    implementation "com.google.android.gms:play-services-base:$play_services_base_version"
 }

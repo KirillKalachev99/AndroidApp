@@ -8,4 +8,9 @@
     <string name="post_text">Текст поста</string>
     <string name="chooser_share_post">Поделиться постом</string>
     <string name="edit_message_text">Редактировать текст</string>
+    <string name="notification_user_liked">%1$s поставил лайк посту %2$s</string>
+    <string name="channel_remote_name">Уведомления с сервера</string>
+    <string name="channel_remote_description">Уведомления с удалённого сервера</string>
+    <string name="notification_new_post">%1$s опубликовал новый пост:</string>
+    <string name="notification_new_post_text">%1$s</string>
 </resources>

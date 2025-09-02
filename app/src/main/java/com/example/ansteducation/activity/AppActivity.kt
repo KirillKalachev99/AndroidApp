@@ -1,6 +1,8 @@
 package com.example.ansteducation.activity
 
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -16,6 +18,7 @@ class AppActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestNotificationsPermission()
         enableEdgeToEdge()
         val binding = ActivityAppBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -30,8 +33,12 @@ class AppActivity : AppCompatActivity() {
 
             val text = it.getStringExtra(Intent.EXTRA_TEXT)
             if (text.isNullOrBlank()) {
-                Snackbar.make(binding.root, R.string.error_empty_content, Snackbar.LENGTH_INDEFINITE)
-                    .setAction(android.R.string.ok){
+                Snackbar.make(
+                    binding.root,
+                    R.string.error_empty_content,
+                    Snackbar.LENGTH_INDEFINITE
+                )
+                    .setAction(android.R.string.ok) {
                         finish()
                     }.show()
                 return@let
@@ -48,5 +55,18 @@ class AppActivity : AppCompatActivity() {
 
     companion object {
         var Bundle.textArg: String? by StringArg
+    }
+
+    private fun requestNotificationsPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return
+        }
+
+        val permission = android.Manifest.permission.POST_NOTIFICATIONS
+        if (checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) {
+            return
+        }
+
+        requestPermissions(arrayOf(permission), 1)
     }
 }
