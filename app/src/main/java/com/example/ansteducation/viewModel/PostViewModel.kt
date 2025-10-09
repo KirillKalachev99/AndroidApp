@@ -1,7 +1,6 @@
 package com.example.ansteducation.viewModel
 
 import android.app.Application
-import android.support.v4.os.IResultReceiver._Parcel
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -39,18 +38,24 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         load(true)
     }
 
-    fun like(id: Long) {
+    fun like(post: Post) {
         thread {
             try {
-                repository.apply {
-                    val posts = get()
-                    val postById = posts.firstOrNull { it.id == id }
-                    if (postById != null) likeById(postById)
-                }
-                load(false)
+                val updatedPost = repository.likeById(post)
+                updatePostInList(updatedPost)
             } catch (e: Exception) {
                 _data.postValue(FeedModel(error = true))
             }
+        }
+    }
+
+    private fun updatePostInList(updatedPost: Post) {
+        val currentState = _data.value
+        if (currentState != null) {
+            val updatedPosts = currentState.posts.map { post ->
+                if (post.id == updatedPost.id) updatedPost else post
+            }
+            _data.postValue(currentState.copy(posts = updatedPosts))
         }
     }
 

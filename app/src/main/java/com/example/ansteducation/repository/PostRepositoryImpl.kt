@@ -61,9 +61,7 @@ class PostRepositoryImpl() : PostRepository {
         }
 
         val call = client.newCall(request)
-
         val response = call.execute()
-
         val textBody = response.body?.string()
 
         return gson.fromJson(textBody, Post::class.java)

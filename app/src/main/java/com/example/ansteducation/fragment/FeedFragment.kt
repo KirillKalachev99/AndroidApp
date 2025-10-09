@@ -18,7 +18,6 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.ansteducation.databinding.FragmentFeedBinding
 
 class FeedFragment : Fragment() {
@@ -61,7 +60,7 @@ class FeedFragment : Fragment() {
 
         val adapter = PostAdapter(object : OnInteractionListener {
             override fun like(post: Post) {
-                viewModel.like(post.id)
+                viewModel.like(post)
             }
 
             override fun share(post: Post) {

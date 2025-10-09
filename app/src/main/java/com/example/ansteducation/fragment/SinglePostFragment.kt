@@ -34,7 +34,7 @@ class SinglePostFragment: Fragment() {
         var postVh = PostViewHolder(binding.singlePost,
             object : OnInteractionListener {
                 override fun like(post: Post) {
-                    viewModel.like(post.id)
+                    viewModel.like(post)
                 }
 
                 override fun share(post: Post) {
