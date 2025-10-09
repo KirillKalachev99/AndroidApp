@@ -10,6 +10,10 @@ object StringArg : ReadWriteProperty<Bundle, String?> {
     }
 
     override fun setValue(thisRef: Bundle, property: KProperty<*>, value: String?) {
-        thisRef.putString(property.name, value)
+        if (value != null) {
+            thisRef.putString(property.name, value)
+        } else {
+            thisRef.remove(property.name)
+        }
     }
 }

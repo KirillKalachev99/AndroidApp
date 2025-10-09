@@ -58,12 +58,11 @@ class SinglePostFragment: Fragment() {
 
             }, null)
 
-        viewModel.data.observe(viewLifecycleOwner) { posts ->
-            val post = posts.find { it.id == postId }
+            val post = viewModel.data.value?.posts?.find { it.id == postId }
             post?.let {
             postVh.bind(it)
             }
-        }
+
 
         return binding.root
     }

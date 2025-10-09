@@ -12,5 +12,7 @@
     <string name="channel_remote_description">Notifications from remote server</string>
     <string name="notification_new_post">%1$s just published new post:</string>
     <string name="notification_new_post_text">%1$s</string>
-
+    <string name="no_posts">No posts</string>
+    <string name="error_title">Something went wrong</string>
+    <string name="retry">Retry</string>
 </resources>

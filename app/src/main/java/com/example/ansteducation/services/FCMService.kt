@@ -18,6 +18,7 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
 import androidx.core.app.NotificationManagerCompat
 import com.example.ansteducation.activity.AppActivity
+import com.example.ansteducation.fragment.SinglePostFragment
 import kotlin.random.Random
 
 class FCMService : FirebaseMessagingService() {

@@ -5,6 +5,7 @@ plugins {
     id 'com.google.gms.google-services'
 }
 
+
 android {
     namespace 'com.example.ansteducation'
     compileSdk 35
@@ -27,6 +28,9 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            manifestPlaceholders["usesCleartextTraffic"] = false        }
+        debug {
+            manifestPlaceholders["usesCleartextTraffic"] = true
         }
     }
     compileOptions {
@@ -40,7 +44,6 @@ android {
 
 dependencies {
     def play_services_base_version = "18.5.0"
-
 
     implementation libs.gson
     implementation libs.androidx.core.ktx
@@ -57,6 +60,9 @@ dependencies {
     implementation libs.androidx.navigation.ui.ktx
     implementation libs.room.runtime
     implementation libs.room.ktx
+    implementation libs.okhttp
+    implementation libs.gson.v2132
+    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01"
     kapt libs.room.compiler
     implementation platform('com.google.firebase:firebase-bom:34.0.0')
     implementation libs.firebase.messaging.ktx

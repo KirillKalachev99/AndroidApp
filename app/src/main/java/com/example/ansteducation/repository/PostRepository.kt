@@ -4,11 +4,11 @@ import androidx.lifecycle.LiveData
 import com.example.ansteducation.dto.Post
 
 interface PostRepository {
-    fun get(): LiveData<List<Post>>
-    fun likeById (id: Long)
+    fun get(slow: Boolean = false): List<Post>
+    fun likeById (post: Post): Post
     fun shareById (id: Long)
-    fun viewById (id: Long)
+    //fun viewById (id: Long)
     fun removeById (id: Long)
-    fun save(post: Post)
+    fun save(post: Post): Post
     fun addVideoPost(post: Post)
 }

@@ -13,4 +13,7 @@
     <string name="channel_remote_description">Уведомления с удалённого сервера</string>
     <string name="notification_new_post">%1$s опубликовал новый пост:</string>
     <string name="notification_new_post_text">%1$s</string>
+    <string name="no_posts">Пока тут пусто. Создайте свой первый пост!</string>
+    <string name="error_title">Что-то пошло не так :(</string>
+    <string name="retry">Попробовать снова</string>
 </resources>

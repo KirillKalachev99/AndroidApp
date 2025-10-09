@@ -14,9 +14,11 @@ import com.example.ansteducation.dto.Post
 import com.example.ansteducation.viewModel.PostViewModel
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.ansteducation.databinding.FragmentFeedBinding
 
 class FeedFragment : Fragment() {
@@ -49,14 +51,13 @@ class FeedFragment : Fragment() {
             ownerProducer = ::requireParentFragment
         )
 
-        viewModel.data.observe(viewLifecycleOwner) { posts ->
-            val postWithVideo = viewModel.postWithVideo
-            val videoPostExists = posts.any { it.id == postWithVideo.id }
+        /* val postWithVideo = viewModel.postWithVideo
+         val videoPostExists = posts.any { it.id == postWithVideo.id }
 
-            if (!videoPostExists) {
-                viewModel.addVideoPost(postWithVideo)
-            }
-        }
+         if (!videoPostExists) {
+             viewModel.addVideoPost(postWithVideo)
+         } */
+
 
         val adapter = PostAdapter(object : OnInteractionListener {
             override fun like(post: Post) {
@@ -88,16 +89,33 @@ class FeedFragment : Fragment() {
                 )
             }
         }) {
-            viewModel.view(it.id)
+            //  viewModel.view(it.id)
         }
 
         binding.list.adapter = adapter
 
-        viewModel.data.observe(viewLifecycleOwner) { posts ->
-            val new = posts.size > adapter.currentList.size && adapter.currentList.isNotEmpty()
-            adapter.submitList(posts) {
-                if (new) binding.list.smoothScrollToPosition(0)
+        binding.swipeRefresh.setOnRefreshListener {
+            viewModel.load(true)
+        }
+
+        viewModel.data.observe(viewLifecycleOwner) { state ->
+            adapter.submitList(state.posts)
+            binding.apply {
+                progress.isVisible = state.loading
+                empty.isVisible = state.empty
+                errorGroup.isVisible = state.error
+                if (swipeRefresh.isRefreshing && !state.loading) {
+                    swipeRefresh.isRefreshing = false
+                }
             }
+
+            binding.retry.setOnClickListener {
+                viewModel.load(slow = true)
+            }
+
+            val new =
+                state.posts.size > adapter.currentList.size && adapter.currentList.isNotEmpty()
+            if (new) binding.list.smoothScrollToPosition(0)
         }
 
         binding.add.setOnClickListener {
@@ -121,5 +139,6 @@ class FeedFragment : Fragment() {
         val intent = Intent(Intent.ACTION_VIEW, url.toUri())
         startActivity(intent)
     }
+
 }
 

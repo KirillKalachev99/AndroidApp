@@ -1,4 +1,4 @@
-package com.example.ansteducation.repository
+/* package com.example.ansteducation.repository
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -59,7 +59,7 @@ class PostRepositoryInMemory : PostRepository {
 
     private val _data = MutableLiveData(posts)
 
-    override fun get(): LiveData<List<Post>> = _data
+    override fun get(): List<Post> = _data
 
     override fun likeById(id: Long) {
         posts = posts.map { post ->
@@ -118,4 +118,4 @@ class PostRepositoryInMemory : PostRepository {
     override fun addVideoPost(post: Post) {
         TODO("Not yet implemented")
     }
-}
+} */

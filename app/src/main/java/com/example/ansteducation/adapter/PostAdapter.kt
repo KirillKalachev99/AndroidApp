@@ -13,6 +13,7 @@ import com.example.ansteducation.R
 import com.example.ansteducation.databinding.CardPostBinding
 import com.example.ansteducation.dto.Post
 
+
 interface OnInteractionListener {
     fun like(post: Post)
     fun share(post: Post)
@@ -50,6 +51,7 @@ class PostViewHolder(
 
     @SuppressLint("UseKtx")
     fun bind(post: Post) {
+
         binding.apply {
             avatar.setImageResource(R.drawable.ic_netology_original_48dp)
             author.text = post.author
