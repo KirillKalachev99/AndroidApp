@@ -3,6 +3,7 @@ package com.example.ansteducation.dto
 data class Post(
     val id: Long,
     val author: String,
+    val authorAvatar: String = "",
     val published: String,
     val content: String,
     val likes: Int = 0,

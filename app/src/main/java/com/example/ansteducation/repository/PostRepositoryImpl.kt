@@ -8,10 +8,14 @@ import com.example.ansteducation.entity.PostEntity
 import com.example.ansteducation.entity.toEntity
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 class PostRepositoryImpl() : PostRepository {
@@ -28,7 +32,7 @@ class PostRepositoryImpl() : PostRepository {
         val jsonType = "application/json".toMediaType()
     }
 
-    override fun get (slow: Boolean): List<Post> {
+    override fun get(slow: Boolean): List<Post> {
         val endpoint = if (slow) "api/slow/posts" else "api/posts"
 
         val request = Request.Builder()
@@ -40,6 +44,38 @@ class PostRepositoryImpl() : PostRepository {
         val textBody = response.body?.string()
 
         return gson.fromJson(textBody, typeToken)
+    }
+
+    override fun getAsync(callback: PostRepository.GetAllCallback, slow: Boolean) {
+        val endpoint = if (slow) "api/slow/posts" else "api/posts"
+
+        val request = Request.Builder()
+            .url("${BASE_URL}$endpoint")
+            .build()
+
+        client.newCall(request)
+            .enqueue(object : Callback {
+                override fun onResponse(call: Call, response: Response) {
+                    val body = response.body?.string() ?: throw RuntimeException("Body is null")
+                    try {
+                        callback.onSuccess(gson.fromJson(body, typeToken))
+                    } catch (e: Exception) {
+                        callback.onError(e)
+                    }
+                }
+
+                override fun onFailure(call: Call, e: IOException) {
+                    callback.onError(e)
+                }
+            })
+    }
+
+    override fun getImgNames(): List<String> {
+        val posts = get()
+        val imgNames = posts.map {
+            it.authorAvatar
+        }
+        return imgNames
     }
 
 

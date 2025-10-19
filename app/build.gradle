@@ -62,7 +62,10 @@ dependencies {
     implementation libs.room.ktx
     implementation libs.okhttp
     implementation libs.gson.v2132
-    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01"
+    implementation libs.androidx.swiperefreshlayout
+    implementation libs.glide
+    implementation libs.fresco
+    implementation libs.picasso
     kapt libs.room.compiler
     implementation platform('com.google.firebase:firebase-bom:34.0.0')
     implementation libs.firebase.messaging.ktx

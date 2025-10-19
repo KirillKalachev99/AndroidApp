@@ -16,23 +16,23 @@ import com.example.ansteducation.databinding.FragmentSinglePostBinding
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.viewModel.PostViewModel
 
-class SinglePostFragment: Fragment() {
+class SinglePostFragment : Fragment() {
 
     private val viewModel: PostViewModel by viewModels(
         ownerProducer = ::requireParentFragment
     )
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
         val binding = FragmentSinglePostBinding.inflate(inflater, container, false)
 
         val postId = arguments?.getLong("postId") ?: findNavController().navigateUp()
 
-        var postVh = PostViewHolder(binding.singlePost,
-            object : OnInteractionListener {
+        val imgNames = viewModel.imgNames.value ?: emptyList()
+
+        val postVh = PostViewHolder(
+            binding.singlePost, object : OnInteractionListener {
                 override fun like(post: Post) {
                     viewModel.like(post)
                 }
@@ -56,13 +56,13 @@ class SinglePostFragment: Fragment() {
                     openVideoUrl(url)
                 }
 
-            }, null)
+            }, null, imgNames = imgNames
+        )
 
-            val post = viewModel.data.value?.posts?.find { it.id == postId }
-            post?.let {
-            postVh.bind(it)
-            }
-
+        val post = viewModel.data.value?.posts?.find { it.id == postId }
+        post?.let {
+            postVh.bind(it, 0)
+        }
 
         return binding.root
     }

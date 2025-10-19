@@ -33,9 +33,24 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     val data: LiveData<FeedModel>
         get() = _data
     val edited = MutableLiveData(empty)
+    private val _imgNames = MutableLiveData<List<String>>()
+    val imgNames: LiveData<List<String>> = _imgNames
+
 
     init {
-        load(true)
+        load(slow = true)
+        loadImgNames()
+    }
+
+    private fun loadImgNames() {
+        thread {
+            try {
+                val names = repository.getImgNames()
+                _imgNames.postValue(names)
+            } catch (e: Exception) {
+                _imgNames.postValue(emptyList())
+            }
+        }
     }
 
     fun like(post: Post) {
@@ -72,20 +87,21 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
             edited.postValue(empty)
-            load(false)
+            load()
         }
     }
 
-    fun load(slow: Boolean) {
-        thread {
-            _data.postValue(FeedModel(loading = true))
-            try {
-                val posts = repository.get(slow = slow)
+    fun load(slow: Boolean = false) {
+       _data.value = FeedModel(loading = true)
+        repository.getAsync(slow = slow, callback = object : PostRepository.GetAllCallback {
+            override fun onSuccess(posts: List<Post>) {
                 _data.postValue(FeedModel(posts = posts, empty = posts.isEmpty()))
-            } catch (_: Exception) {
+            }
+
+            override fun onError(e: Exception) {
                 _data.postValue(FeedModel(error = true))
             }
-        }
+        })
     }
 
     fun edit(post: Post) {

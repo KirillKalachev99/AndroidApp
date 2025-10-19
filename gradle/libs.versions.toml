@@ -1,6 +1,8 @@
 [versions]
 agp = "8.9.2"
 firebaseBom = "34.2.0"
+fresco = "3.6.0"
+glide = "5.0.5"
 gson = "2.11.0"
 gsonVersion = "2.13.2"
 kotlin = "2.0.21"
@@ -15,14 +17,21 @@ activity = "1.10.1"
 constraintlayout = "2.2.1"
 navigationFragmentKtx = "2.7.7"
 okhttp = "4.12.0"
+picasso = "2.8"
 room = "2.7.2"
 firebase-messaging = "24.0.0"
+swiperefreshlayout = "1.2.0-alpha01"
+
 
 [libraries]
+androidx-swiperefreshlayout = { module = "androidx.swiperefreshlayout:swiperefreshlayout", version.ref = "swiperefreshlayout" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-messaging-ktx = { group = "com.google.firebase", name = "firebase-messaging-ktx", version.ref = "firebase-messaging" }
+fresco = { module = "com.facebook.fresco:fresco", version.ref = "fresco" }
+glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 gson-v2132 = { module = "com.google.code.gson:gson", version.ref = "gsonVersion" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+picasso = { module = "com.squareup.picasso:picasso", version.ref = "picasso" }
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
