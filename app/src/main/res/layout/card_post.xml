@@ -71,7 +71,7 @@
         tools:ignore="ContentDescription,SpeakableTextPresentCheck,TouchTargetSizeCheck" />
 
     <ImageButton
-        android:id="@+id/video"
+        android:id="@+id/attachment"
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:adjustViewBounds="true"
@@ -100,10 +100,10 @@
         app:iconPadding="0dp"
         app:iconSize="64dp"
         app:iconTint="@color/white"
-        app:layout_constraintBottom_toBottomOf="@id/video"
-        app:layout_constraintEnd_toEndOf="@id/video"
-        app:layout_constraintStart_toStartOf="@id/video"
-        app:layout_constraintTop_toTopOf="@id/video"
+        app:layout_constraintBottom_toBottomOf="@id/attachment"
+        app:layout_constraintEnd_toEndOf="@id/attachment"
+        app:layout_constraintStart_toStartOf="@id/attachment"
+        app:layout_constraintTop_toTopOf="@id/attachment"
         tools:ignore="ContentDescription,SpeakableTextPresentCheck"
         tools:visibility="visible" />
 
@@ -112,7 +112,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginVertical="@dimen/common_margin"
-        app:layout_constraintTop_toBottomOf="@id/video"
+        app:layout_constraintTop_toBottomOf="@id/attachment"
         tools:ignore="VisualLintLongText"
         tools:text="@sample/posts.json/data/content" />
 

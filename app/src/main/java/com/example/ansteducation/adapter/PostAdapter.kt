@@ -1,17 +1,23 @@
 package com.example.ansteducation.adapter
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.ansteducation.CountFormat
 import com.example.ansteducation.R
 import com.example.ansteducation.databinding.CardPostBinding
 import com.example.ansteducation.dto.Post
+import com.example.ansteducation.viewModel.PostViewModel
+import androidx.fragment.app.viewModels
+import com.example.ansteducation.repository.PostRepositoryImpl
 
 
 interface OnInteractionListener {
@@ -51,9 +57,20 @@ class PostViewHolder(
 
     @SuppressLint("UseKtx")
     fun bind(post: Post) {
+        val repository = PostRepositoryImpl()
+        val endpointImg = repository.getImgUrl()
+        val endpointAttach = repository.getAttachmentUrl()
 
         binding.apply {
-            avatar.setImageResource(R.drawable.ic_netology_original_48dp)
+            attachment.visibility = View.GONE
+            Glide.with(root).clear(attachment)
+            Glide.with(root)
+                .load(endpointImg + post.authorAvatar)
+                .placeholder(R.drawable.ic_avatar_placeholder_48)
+                .error(R.drawable.ic_avatar_error_48)
+                .timeout(10_000)
+                .circleCrop()
+                .into(avatar)
             author.text = post.author
             published.text = post.published
             content.text = post.content
@@ -85,22 +102,16 @@ class PostViewHolder(
                     }
                 }.show()
             }
-            if (!post.video.isNullOrBlank()) {
-                video.visibility = View.VISIBLE
-                play.visibility = View.VISIBLE
-                video.setImageResource(R.drawable.preview_video)
-
-                val videoClickListener = View.OnClickListener {
-                    onInteractionListener.playVideo(post.video!!)
-                }
-
-                video.setOnClickListener(videoClickListener)
-                play.setOnClickListener(videoClickListener)
+            if (post.attachment?.url?.isNotEmpty() == true) {
+                attachment.visibility = View.VISIBLE
+                Glide.with(root)
+                    .load(endpointAttach + post.attachment.url)
+                    .timeout(10_000)
+                    .into(attachment)
             } else {
-                video.visibility = View.GONE
-                play.visibility = View.GONE
+                attachment.visibility = View.GONE
+                Glide.with(root).clear(attachment)
             }
-
             root.setOnClickListener {
                 onInteractionListener.onPostClick(post)
             }
@@ -122,6 +133,6 @@ object PostDiffCallback : DiffUtil.ItemCallback<Post>() {
     }
 
     override fun areContentsTheSame(oldItem: Post, newItem: Post): Boolean {
-        return oldItem == newItem && oldItem.video == newItem.video
+        return oldItem == newItem && oldItem.attachment == newItem.attachment
     }
 }

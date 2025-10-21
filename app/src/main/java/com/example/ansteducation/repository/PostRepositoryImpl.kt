@@ -1,11 +1,6 @@
 package com.example.ansteducation.repository
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.map
-import com.example.ansteducation.dao.PostDao
 import com.example.ansteducation.dto.Post
-import com.example.ansteducation.entity.PostEntity
-import com.example.ansteducation.entity.toEntity
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import okhttp3.MediaType.Companion.toMediaType
@@ -28,7 +23,7 @@ class PostRepositoryImpl() : PostRepository {
         val jsonType = "application/json".toMediaType()
     }
 
-    override fun get (slow: Boolean): List<Post> {
+    override fun get(slow: Boolean): List<Post> {
         val endpoint = if (slow) "api/slow/posts" else "api/posts"
 
         val request = Request.Builder()
@@ -42,6 +37,17 @@ class PostRepositoryImpl() : PostRepository {
         return gson.fromJson(textBody, typeToken)
     }
 
+    override fun getImgUrl(): String {
+        val endpoint = "avatars/"
+        val url = "${BASE_URL}$endpoint"
+        return url
+    }
+
+    override fun getAttachmentUrl(): String {
+        val endpoint = "images/"
+        val url = "${BASE_URL}$endpoint"
+        return url
+    }
 
     override fun likeById(post: Post): Post {
         val postId = post.id.toString()
@@ -66,7 +72,6 @@ class PostRepositoryImpl() : PostRepository {
 
         return gson.fromJson(textBody, Post::class.java)
     }
-
 
     override fun shareById(id: Long) {
         TODO("Not yet implemented")
@@ -98,6 +103,7 @@ class PostRepositoryImpl() : PostRepository {
     override fun addVideoPost(post: Post) {
         TODO("Not yet implemented")
     }
+
 
     /*  override fun get(): LiveData<List<Post>> = dao.getAll().map { listPosts ->
         listPosts.map { entity ->

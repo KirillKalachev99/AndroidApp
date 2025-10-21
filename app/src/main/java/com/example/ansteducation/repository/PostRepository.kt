@@ -1,5 +1,6 @@
 package com.example.ansteducation.repository
 
+import android.graphics.Bitmap
 import androidx.lifecycle.LiveData
 import com.example.ansteducation.dto.Post
 
@@ -11,4 +12,6 @@ interface PostRepository {
     fun removeById (id: Long)
     fun save(post: Post): Post
     fun addVideoPost(post: Post)
+    fun getImgUrl(): String
+    fun getAttachmentUrl(): String
 }
