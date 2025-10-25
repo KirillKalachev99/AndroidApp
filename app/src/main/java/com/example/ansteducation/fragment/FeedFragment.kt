@@ -14,12 +14,10 @@ import com.example.ansteducation.dto.Post
 import com.example.ansteducation.viewModel.PostViewModel
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.ansteducation.databinding.FragmentFeedBinding
-import com.example.ansteducation.model.FeedModel
 
 class FeedFragment : Fragment() {
 
@@ -41,7 +39,6 @@ class FeedFragment : Fragment() {
 
         setupWindowInsets()
         setupAdapter()
-        setupObservers()
         setupSwipeRefresh()
         setupAddButton()
 
@@ -99,7 +96,6 @@ class FeedFragment : Fragment() {
                     )
                 }
             },
-            imgNames = emptyList()
         ) {
             // viewModel.view(it.id)
         }
@@ -107,35 +103,6 @@ class FeedFragment : Fragment() {
         binding.list.adapter = adapter
     }
 
-    private fun setupObservers() {
-        viewModel.imgNames.observe(viewLifecycleOwner) { imgNames ->
-            adapter.updateImgNames(imgNames)
-        }
-        viewModel.data.observe(viewLifecycleOwner) { state ->
-            adapter.submitList(state.posts)
-            updateUI(state)
-        }
-    }
-
-    private fun updateUI(state: FeedModel) {
-        binding.apply {
-            progress.isVisible = state.loading
-            empty.isVisible = state.empty
-            errorGroup.isVisible = state.error
-
-            if (swipeRefresh.isRefreshing && !state.loading) {
-                swipeRefresh.isRefreshing = false
-            }
-        }
-        binding.retry.setOnClickListener {
-            viewModel.load()
-        }
-        val newPosts =
-            state.posts.size > adapter.currentList.size && adapter.currentList.isNotEmpty()
-        if (newPosts) {
-            binding.list.smoothScrollToPosition(0)
-        }
-    }
 
     private fun setupSwipeRefresh() {
         binding.swipeRefresh.setOnRefreshListener {

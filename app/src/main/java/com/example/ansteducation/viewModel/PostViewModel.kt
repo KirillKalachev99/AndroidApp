@@ -39,18 +39,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         load()
-        loadImgNames()
-    }
-
-    private fun loadImgNames() {
-        thread {
-            try {
-                val names = repository.getImgNames()
-                _imgNames.postValue(names)
-            } catch (e: Exception) {
-                _imgNames.postValue(emptyList())
-            }
-        }
     }
 
     fun like(post: Post) {
@@ -83,7 +71,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         thread {
             repository.removeById(id)
         }
-        loadSync()
+        load()
     }
 
 
@@ -97,13 +85,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             }
             edited.postValue(empty)
             load()
-        }
-    }
-
-    fun loadSync() {
-        _data.value = FeedModel(loading = true)
-        thread {
-            repository.get()
         }
     }
 

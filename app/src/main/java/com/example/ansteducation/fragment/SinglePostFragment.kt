@@ -29,8 +29,6 @@ class SinglePostFragment : Fragment() {
 
         val postId = arguments?.getLong("postId") ?: findNavController().navigateUp()
 
-        val imgNames = viewModel.imgNames.value ?: emptyList()
-
         val postVh = PostViewHolder(
             binding.singlePost, object : OnInteractionListener {
                 override fun like(post: Post) {
@@ -56,12 +54,12 @@ class SinglePostFragment : Fragment() {
                     openVideoUrl(url)
                 }
 
-            }, null, imgNames = imgNames
+            }, null
         )
 
         val post = viewModel.data.value?.posts?.find { it.id == postId }
         post?.let {
-            postVh.bind(it, 0)
+            postVh.bind(it)
         }
 
         return binding.root
