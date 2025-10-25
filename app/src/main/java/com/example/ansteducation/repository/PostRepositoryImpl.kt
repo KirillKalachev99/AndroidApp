@@ -1,88 +1,109 @@
 package com.example.ansteducation.repository
 
-import com.example.ansteducation.api.PostApi
-import com.example.ansteducation.dao.PostDao
 import com.example.ansteducation.dto.Post
-import com.example.ansteducation.entity.PostEntity
-import com.example.ansteducation.entity.toEntity
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.util.concurrent.TimeUnit
 
 class PostRepositoryImpl() : PostRepository {
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .build()
 
+    private val gson = Gson()
 
-    override fun get(): List<Post> {
-        return PostApi.service.getAll()
-            .execute()
-            .body()
-            .orEmpty()
+    private val typeToken = TypeToken.getParameterized(List::class.java, Post::class.java).type
+
+    companion object {
+        private const val BASE_URL = "http://10.0.2.2:9999/"
+        val jsonType = "application/json".toMediaType()
     }
 
-    override fun getAsync(callback: PostRepository.GetAllCallback) {
-        PostApi.service.getAll()
-            .enqueue(object : Callback<List<Post>> {
-                override fun onResponse(
-                    call: Call<List<Post>>,
-                    response: Response<List<Post>>
-                ) {
-                    if (!response.isSuccessful) {
-                        callback.onError(RuntimeException(response.errorBody()?.string()))
-                        return
-                    }
-                    callback.onSuccess(response.body().orEmpty())
-                }
+    override fun get(slow: Boolean): List<Post> {
+        val endpoint = if (slow) "api/slow/posts" else "api/posts"
 
-                override fun onFailure(call: Call<List<Post>>, throwable: Throwable) {
-                    callback.onError(throwable)
-                }
-            })
+        val request = Request.Builder()
+            .url("${BASE_URL}$endpoint")
+            .build()
+
+        val call = client.newCall(request)
+        val response = call.execute()
+        val textBody = response.body?.string()
+
+        return gson.fromJson(textBody, typeToken)
     }
 
-    override fun getImgNames(): List<String> {
-        val posts = get()
-        val imgNames = posts.map {
-            it.authorAvatar
-        }
-        return imgNames
+    override fun getImgUrl(): String {
+        val endpoint = "avatars/"
+        val url = "${BASE_URL}$endpoint"
+        return url
     }
 
-    override fun likeById(post: Post): Post? {
-        val postId = post.id
+    override fun getAttachmentUrl(): String {
+        val endpoint = "images/"
+        val url = "${BASE_URL}$endpoint"
+        return url
+    }
+
+    override fun likeById(post: Post): Post {
+        val postId = post.id.toString()
         val alreadyLiked = post.likedByMe
+        val urlLike = "${BASE_URL}api/posts/$postId/likes"
 
-        return if (!alreadyLiked) {
-            PostApi.service.likeById(postId)
-                .execute()
-                .body()
+        val request = if (!alreadyLiked) {
+            Request.Builder()
+                .url(urlLike)
+                .post(gson.toJson(post).toRequestBody(jsonType))
+                .build()
         } else {
-            PostApi.service.dislikeById(postId)
-                .execute()
-                .body()
+            Request.Builder()
+                .url(urlLike)
+                .delete(gson.toJson(post).toRequestBody(jsonType))
+                .build()
         }
+
+        val call = client.newCall(request)
+        val response = call.execute()
+        val textBody = response.body?.string()
+
+        return gson.fromJson(textBody, Post::class.java)
     }
 
     override fun shareById(id: Long) {
         TODO("Not yet implemented")
     }
 
-    // override fun viewById(id: Long) {
+// override fun viewById(id: Long) {
 //
 //}
+
     override fun removeById(id: Long) {
-        PostApi.service.deleteById(id)
-            .execute()
+        TODO("Not yet implemented")
     }
 
-    override fun save(post: Post): Post? {
-        return PostApi.service.save(post)
-            .execute()
-            .body()
+    override fun save(post: Post): Post {
+        val request = Request.Builder()
+            .url("${BASE_URL}api/posts")
+            .post(gson.toJson(post).toRequestBody(jsonType))
+            .build()
+
+        val call = client.newCall(request)
+
+        val response = call.execute()
+
+        val textBody = response.body?.string()
+
+        return gson.fromJson(textBody, Post::class.java)
     }
 
     override fun addVideoPost(post: Post) {
         TODO("Not yet implemented")
     }
+
 
     /*  override fun get(): LiveData<List<Post>> = dao.getAll().map { listPosts ->
         listPosts.map { entity ->

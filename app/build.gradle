@@ -28,8 +28,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            manifestPlaceholders["usesCleartextTraffic"] = false
-        }
+            manifestPlaceholders["usesCleartextTraffic"] = false        }
         debug {
             manifestPlaceholders["usesCleartextTraffic"] = true
         }
@@ -62,13 +61,9 @@ dependencies {
     implementation libs.room.runtime
     implementation libs.room.ktx
     implementation libs.okhttp
-    implementation libs.retrofit
-    implementation libs.retrofit2.converter.gson
     implementation libs.gson.v2132
-    implementation libs.androidx.swiperefreshlayout
     implementation libs.glide
-    implementation libs.fresco
-    implementation libs.picasso
+    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01"
     kapt libs.room.compiler
     implementation platform('com.google.firebase:firebase-bom:34.0.0')
     implementation libs.firebase.messaging.ktx

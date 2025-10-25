@@ -1,10 +1,12 @@
 package com.example.ansteducation.adapter
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -13,8 +15,9 @@ import com.example.ansteducation.CountFormat
 import com.example.ansteducation.R
 import com.example.ansteducation.databinding.CardPostBinding
 import com.example.ansteducation.dto.Post
+import com.example.ansteducation.viewModel.PostViewModel
+import androidx.fragment.app.viewModels
 import com.example.ansteducation.repository.PostRepositoryImpl
-import kotlin.concurrent.thread
 
 
 interface OnInteractionListener {
@@ -23,31 +26,25 @@ interface OnInteractionListener {
     fun remove(post: Post)
     fun edit(post: Post)
     fun playVideo(url: String)
-    fun onPostClick(post: Post) {}
+    fun onPostClick(post: Post){}
 }
 
 typealias onItemViewListener = (post: Post) -> Unit
 
 class PostAdapter(
     private val onInteractionListener: OnInteractionListener,
-    private var imgNames: List<String>,
     private val onItemViewListener: onItemViewListener? = null,
-) : ListAdapter<Post, PostViewHolder>(PostDiffCallback) {
-
-    @SuppressLint("NotifyDataSetChanged")
-    fun updateImgNames(newImgNames: List<String>) {
-        imgNames = newImgNames
-        notifyDataSetChanged()
-    }
+) :
+    ListAdapter<Post, PostViewHolder>(PostDiffCallback) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
         val binding = CardPostBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return PostViewHolder(binding, onInteractionListener, onItemViewListener, imgNames)
+        return PostViewHolder(binding, onInteractionListener, onItemViewListener)
     }
 
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
         val post = getItem(position)
-        holder.bind(post, position)
+        holder.bind(post)
         holder.viewed(post)
     }
 }
@@ -56,26 +53,24 @@ class PostViewHolder(
     private val binding: CardPostBinding,
     private val onInteractionListener: OnInteractionListener,
     private val onItemViewListener: onItemViewListener?,
-    private val imgNames: List<String>
 ) : RecyclerView.ViewHolder(binding.root) {
 
     @SuppressLint("UseKtx")
-    fun bind(post: Post, position: Int) {
+    fun bind(post: Post) {
+        val repository = PostRepositoryImpl()
+        val endpointImg = repository.getImgUrl()
+        val endpointAttach = repository.getAttachmentUrl()
+
         binding.apply {
-            if (imgNames.isNotEmpty()) {
-                val imgIndex = position % imgNames.size
-                val imgName = imgNames[imgIndex]
-                val imgEndpoint = "http://10.0.2.2:9999/avatars/$imgName"
-                Glide.with(root)
-                    .load(imgEndpoint)
-                    .circleCrop()
-                    .placeholder(R.drawable.ic_no_photo)
-                    .error(R.drawable.ic_no_photo_error)
-                    .timeout(10_000)
-                    .into(avatar)
-            } else {
-                avatar.setImageResource(R.drawable.ic_no_photo)
-            }
+            attachment.visibility = View.GONE
+            Glide.with(root).clear(attachment)
+            Glide.with(root)
+                .load(endpointImg + post.authorAvatar)
+                .placeholder(R.drawable.ic_avatar_placeholder_48)
+                .error(R.drawable.ic_avatar_error_48)
+                .timeout(10_000)
+                .circleCrop()
+                .into(avatar)
             author.text = post.author
             published.text = post.published
             content.text = post.content
@@ -83,15 +78,12 @@ class PostViewHolder(
             share.text = CountFormat.format(post.shares)
             seen.text = CountFormat.format(post.views)
             like.isChecked = post.likedByMe
-
             like.setOnClickListener {
                 onInteractionListener.like(post)
             }
-
             share.setOnClickListener {
                 onInteractionListener.share(post)
             }
-
             menu.setOnClickListener {
                 PopupMenu(it.context, it).apply {
                     inflate(R.menu.menu_post)
@@ -110,23 +102,16 @@ class PostViewHolder(
                     }
                 }.show()
             }
-
-            if (!post.video.isNullOrBlank()) {
-                video.visibility = View.VISIBLE
-                play.visibility = View.VISIBLE
-                video.setImageResource(R.drawable.preview_video)
-
-                val videoClickListener = View.OnClickListener {
-                    onInteractionListener.playVideo(post.video!!)
-                }
-
-                video.setOnClickListener(videoClickListener)
-                play.setOnClickListener(videoClickListener)
+            if (post.attachment?.url?.isNotEmpty() == true) {
+                attachment.visibility = View.VISIBLE
+                Glide.with(root)
+                    .load(endpointAttach + post.attachment.url)
+                    .timeout(10_000)
+                    .into(attachment)
             } else {
-                video.visibility = View.GONE
-                play.visibility = View.GONE
+                attachment.visibility = View.GONE
+                Glide.with(root).clear(attachment)
             }
-
             root.setOnClickListener {
                 onInteractionListener.onPostClick(post)
             }
@@ -148,6 +133,6 @@ object PostDiffCallback : DiffUtil.ItemCallback<Post>() {
     }
 
     override fun areContentsTheSame(oldItem: Post, newItem: Post): Boolean {
-        return oldItem == newItem && oldItem.video == newItem.video
+        return oldItem == newItem && oldItem.attachment == newItem.attachment
     }
 }
