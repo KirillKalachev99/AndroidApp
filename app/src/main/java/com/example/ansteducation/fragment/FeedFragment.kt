@@ -128,7 +128,7 @@ class FeedFragment : Fragment() {
             }
         }
         binding.retry.setOnClickListener {
-            viewModel.load(slow = true)
+            viewModel.load()
         }
         val newPosts =
             state.posts.size > adapter.currentList.size && adapter.currentList.isNotEmpty()

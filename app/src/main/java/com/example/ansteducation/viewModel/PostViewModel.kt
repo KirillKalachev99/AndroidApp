@@ -38,7 +38,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
 
     init {
-        load(slow = true)
+        load()
         loadImgNames()
     }
 
@@ -57,7 +57,9 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         thread {
             try {
                 val updatedPost = repository.likeById(post)
-                updatePostInList(updatedPost)
+                if (updatedPost != null) {
+                    updatePostInList(updatedPost)
+                }
             } catch (e: Exception) {
                 _data.postValue(FeedModel(error = true))
             }
@@ -75,8 +77,15 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun repost(id: Long) = repository.shareById(id)
-   // fun view(id: Long) = repository.viewById(id)
-    fun remove(id: Long) = repository.removeById(id)
+
+    // fun view(id: Long) = repository.viewById(id)
+    fun remove(id: Long) {
+        thread {
+            repository.removeById(id)
+        }
+        loadSync()
+    }
+
 
     fun save(text: String) {
         thread {
@@ -91,14 +100,21 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun load(slow: Boolean = false) {
-       _data.value = FeedModel(loading = true)
-        repository.getAsync(slow = slow, callback = object : PostRepository.GetAllCallback {
+    fun loadSync() {
+        _data.value = FeedModel(loading = true)
+        thread {
+            repository.get()
+        }
+    }
+
+    fun load() {
+        _data.value = FeedModel(loading = true)
+        repository.getAsync(callback = object : PostRepository.GetAllCallback {
             override fun onSuccess(posts: List<Post>) {
                 _data.postValue(FeedModel(posts = posts, empty = posts.isEmpty()))
             }
 
-            override fun onError(e: Exception) {
+            override fun onError(e: Throwable) {
                 _data.postValue(FeedModel(error = true))
             }
         })
