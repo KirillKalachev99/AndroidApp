@@ -16,4 +16,6 @@
     <string name="no_posts">Пока тут пусто. Создайте свой первый пост!</string>
     <string name="error_title">Что-то пошло не так :(</string>
     <string name="retry">Попробовать снова</string>
+    <string name="no_response">Ошибка сервера. Потяните вниз для повторного запроса</string>
+    <string name="no_response_like">Не удалось поставить лайк. Попробуйте снова</string>
 </resources>

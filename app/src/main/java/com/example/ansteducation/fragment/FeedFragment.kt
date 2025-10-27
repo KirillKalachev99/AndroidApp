@@ -14,39 +14,23 @@ import com.example.ansteducation.dto.Post
 import com.example.ansteducation.viewModel.PostViewModel
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.ansteducation.databinding.FragmentFeedBinding
+import com.google.android.material.snackbar.Snackbar
 
 class FeedFragment : Fragment() {
-
-    private lateinit var binding: FragmentFeedBinding
-    private val viewModel: PostViewModel by viewModels(ownerProducer = ::requireParentFragment)
-    private lateinit var adapter: PostAdapter
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentFeedBinding.inflate(inflater, container, false)
-        return binding.root
-    }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+        val binding = FragmentFeedBinding.inflate(inflater, container, false)
 
-        setupWindowInsets()
-        setupAdapter()
-        setupSwipeRefresh()
-        setupAddButton()
-
-        viewModel.load()
-    }
-
-    private fun setupWindowInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.navHostFragment) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val horizontalPadding =
                 systemBars.left + resources.getDimensionPixelSize(R.dimen.common_margin)
@@ -62,59 +46,93 @@ class FeedFragment : Fragment() {
             )
             insets
         }
-    }
 
-    private fun setupAdapter() {
-        adapter = PostAdapter(
-            onInteractionListener = object : OnInteractionListener {
-                override fun like(post: Post) {
-                    viewModel.like(post)
-                }
+        val viewModel: PostViewModel by viewModels(
+            ownerProducer = ::requireParentFragment
+        )
 
-                override fun share(post: Post) {
-                    sharePost(post)
-                    viewModel.repost(post.id)
-                }
+        /* val postWithVideo = viewModel.postWithVideo
+         val videoPostExists = posts.any { it.id == postWithVideo.id }
 
-                override fun remove(post: Post) {
-                    viewModel.remove(post.id)
-                }
+         if (!videoPostExists) {
+             viewModel.addVideoPost(postWithVideo)
+         } */
 
-                override fun edit(post: Post) {
-                    viewModel.edit(post)
-                    findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
-                }
 
-                override fun playVideo(videoUrl: String) {
-                    openVideoUrl(videoUrl)
-                }
+        val adapter = PostAdapter(object : OnInteractionListener {
+            override fun like(post: Post) {
+                viewModel.like(post)
+            }
 
-                override fun onPostClick(post: Post) {
-                    findNavController().navigate(
-                        R.id.action_feedFragment_to_singlePostFragment,
-                        bundleOf("postId" to post.id)
-                    )
-                }
-            },
-        ) {
-            // viewModel.view(it.id)
+            override fun share(post: Post) {
+                sharePost(post)
+                viewModel.repost(post.id)
+            }
+
+            override fun remove(post: Post) {
+                viewModel.remove(post.id)
+            }
+
+            override fun edit(post: Post) {
+                viewModel.edit(post)
+                findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
+            }
+
+            override fun playVideo(videoUrl: String) {
+                openVideoUrl(videoUrl)
+            }
+
+            override fun onPostClick(post: Post) {
+                findNavController().navigate(
+                    R.id.action_feedFragment_to_singlePostFragment,
+                    bundleOf("postId" to post.id)
+                )
+            }
+        }) {
+            //  viewModel.view(it.id)
         }
 
         binding.list.adapter = adapter
-    }
 
-
-    private fun setupSwipeRefresh() {
         binding.swipeRefresh.setOnRefreshListener {
             viewModel.load()
         }
-    }
 
-    private fun setupAddButton() {
+        viewModel.data.observe(viewLifecycleOwner) { state ->
+            adapter.submitList(state.posts)
+            binding.apply {
+                progress.isVisible = state.loading
+                empty.isVisible = state.empty
+                errorGroup.isVisible = state.error
+                if (swipeRefresh.isRefreshing && !state.loading) {
+                    swipeRefresh.isRefreshing = false
+                }
+            }
+            if (state.responseError) {
+                state.responseErrorText?.let { errorText ->
+                    Snackbar.make(binding.root, errorText, Snackbar.LENGTH_LONG).show()
+                    viewModel.errorShown()
+                }
+            }
+            if (state.error || state.empty) {
+                Snackbar.make(binding.root, R.string.no_response, Snackbar.LENGTH_SHORT).show()
+            }
+
+            binding.retry.setOnClickListener {
+                viewModel.load()
+            }
+
+            val new =
+                state.posts.size > adapter.currentList.size && adapter.currentList.isNotEmpty()
+            if (new) binding.list.smoothScrollToPosition(0)
+        }
+
         binding.add.setOnClickListener {
             findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
             viewModel.clear()
         }
+
+        return binding.root
     }
 
     private fun sharePost(post: Post) {
@@ -130,4 +148,5 @@ class FeedFragment : Fragment() {
         val intent = Intent(Intent.ACTION_VIEW, url.toUri())
         startActivity(intent)
     }
+
 }

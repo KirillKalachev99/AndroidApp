@@ -7,5 +7,7 @@ data class FeedModel(
     val loading: Boolean = false,
     val error: Boolean = false,
     val empty: Boolean = false,
-    var likedByMe: Boolean = false
+    var likedByMe: Boolean = false,
+    var responseError: Boolean = false,
+    var responseErrorText: String? = null
 )

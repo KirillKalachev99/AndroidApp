@@ -1,7 +1,9 @@
 package com.example.ansteducation.api
 
+import com.example.ansteducation.BuildConfig
 import com.example.ansteducation.dto.Post
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -15,6 +17,13 @@ import java.util.concurrent.TimeUnit
 
 private val client = OkHttpClient.Builder()
     .connectTimeout(30, TimeUnit.SECONDS)
+    .apply {
+        if (BuildConfig.DEBUG) {
+            addInterceptor(HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BODY
+            })
+        }
+    }
     .build()
 
 private const val BASE_URL = "http://10.0.2.2:9999/api/slow/"

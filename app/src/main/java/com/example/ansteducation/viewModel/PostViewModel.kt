@@ -1,13 +1,16 @@
 package com.example.ansteducation.viewModel
 
 import android.app.Application
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.ansteducation.R
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.model.FeedModel
 import com.example.ansteducation.repository.PostRepository
 import com.example.ansteducation.repository.PostRepositoryImpl
+import com.google.android.material.snackbar.Snackbar
 import kotlin.concurrent.thread
 
 private val empty = Post(
@@ -33,23 +36,43 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     val data: LiveData<FeedModel>
         get() = _data
     val edited = MutableLiveData(empty)
-    private val _imgNames = MutableLiveData<List<String>>()
-    val imgNames: LiveData<List<String>> = _imgNames
-
 
     init {
         load()
     }
 
     fun like(post: Post) {
+        val updatedPost = post.copy(
+            likedByMe = !post.likedByMe,
+            likes = if (!post.likedByMe) post.likes + 1 else post.likes - 1
+        )
+        updatePostInList(updatedPost)
+
         thread {
             try {
-                val updatedPost = repository.likeById(post)
-                if (updatedPost != null) {
-                    updatePostInList(updatedPost)
+                val serverPost = repository.likeById(post)
+                if (serverPost != null) {
+                    updatePostInList(serverPost)
+                }
+                _data.value?.let { currentState ->
+                    _data.postValue(
+                        currentState.copy(
+                            responseError = false,
+                            responseErrorText = null
+                        )
+                    )
                 }
             } catch (e: Exception) {
-                _data.postValue(FeedModel(error = true))
+                updatePostInList(post)
+
+                _data.value?.let { currentState ->
+                    _data.postValue(
+                        currentState.copy(
+                            responseError = true,
+                            responseErrorText = getApplication<Application>().getString(R.string.no_response_like)
+                        )
+                    )
+                }
             }
         }
     }
@@ -67,13 +90,22 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     fun repost(id: Long) = repository.shareById(id)
 
     // fun view(id: Long) = repository.viewById(id)
-    fun remove(id: Long) {
-        thread {
-            repository.removeById(id)
-        }
-        load()
-    }
 
+    fun remove(id: Long) {
+        val currentState = _data.value
+        if (currentState != null) {
+            val updatedPosts = currentState.posts.filter { it.id != id }
+            _data.value = currentState.copy(posts = updatedPosts)
+        }
+        thread {
+            try {
+                repository.removeById(id)
+                load()
+            } catch (e: Exception) {
+                _data.postValue(FeedModel(error = true))
+            }
+        }
+    }
 
     fun save(text: String) {
         thread {
@@ -89,16 +121,27 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun load() {
-        _data.value = FeedModel(loading = true)
-        repository.getAsync(callback = object : PostRepository.GetAllCallback {
-            override fun onSuccess(posts: List<Post>) {
+        thread {
+            _data.postValue(FeedModel(loading = true))
+            try {
+                val posts = repository.get()
                 _data.postValue(FeedModel(posts = posts, empty = posts.isEmpty()))
-            }
-
-            override fun onError(e: Throwable) {
+            } catch (_: Exception) {
                 _data.postValue(FeedModel(error = true))
             }
-        })
+        }
+    }
+
+    fun errorShown() {
+        // Сбрасываем только флаги ошибки, сохраняя посты
+        _data.value?.let { currentState ->
+            _data.postValue(
+                currentState.copy(
+                    responseError = false,
+                    responseErrorText = null
+                )
+            )
+        }
     }
 
     fun edit(post: Post) {

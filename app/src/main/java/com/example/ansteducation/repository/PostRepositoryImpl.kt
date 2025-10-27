@@ -1,5 +1,6 @@
 package com.example.ansteducation.repository
 
+import android.widget.Toast
 import com.example.ansteducation.api.PostApi
 import com.example.ansteducation.dao.PostDao
 import com.example.ansteducation.dto.Post
@@ -51,14 +52,20 @@ class PostRepositoryImpl() : PostRepository {
         val postId = post.id
         val alreadyLiked = post.likedByMe
 
-        return if (!alreadyLiked) {
-            PostApi.service.likeById(postId)
-                .execute()
-                .body()
-        } else {
-            PostApi.service.dislikeById(postId)
-                .execute()
-                .body()
+        return try {
+            val response = if (!alreadyLiked) {
+                PostApi.service.likeById(postId).execute()
+            } else {
+                PostApi.service.dislikeById(postId).execute()
+            }
+
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                throw RuntimeException("HTTP error: ${response.code()} - ${response.message()}")
+            }
+        } catch (e: Exception) {
+            throw e
         }
     }
 
@@ -75,9 +82,17 @@ class PostRepositoryImpl() : PostRepository {
     }
 
     override fun save(post: Post): Post? {
-        return PostApi.service.save(post)
-            .execute()
-            .body()
+        return try {
+            val response = PostApi.service.save(post)
+                .execute()
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                throw RuntimeException("HTTP error: ${response.code()} - ${response.message()}")
+            }
+        } catch (e: Exception) {
+            throw e
+        }
     }
 
     override fun addVideoPost(post: Post) {
