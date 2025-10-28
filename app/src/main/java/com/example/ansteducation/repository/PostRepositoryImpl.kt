@@ -1,17 +1,12 @@
 package com.example.ansteducation.repository
 
-import android.widget.Toast
 import com.example.ansteducation.api.PostApi
-import com.example.ansteducation.dao.PostDao
 import com.example.ansteducation.dto.Post
-import com.example.ansteducation.entity.PostEntity
-import com.example.ansteducation.entity.toEntity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class PostRepositoryImpl() : PostRepository {
-
+class PostRepositoryImpl : PostRepository {
 
     override fun get(): List<Post> {
         return PostApi.service.getAll()
@@ -42,10 +37,7 @@ class PostRepositoryImpl() : PostRepository {
 
     override fun getImgNames(): List<String> {
         val posts = get()
-        val imgNames = posts.map {
-            it.authorAvatar
-        }
-        return imgNames
+        return posts.map { it.authorAvatar }
     }
 
     override fun likeById(post: Post): Post? {
@@ -69,22 +61,59 @@ class PostRepositoryImpl() : PostRepository {
         }
     }
 
+    override fun likeByIdAsync(post: Post, callback: PostRepository.LikeCallback) {
+        val postId = post.id
+        val alreadyLiked = post.likedByMe
+
+        val call = if (!alreadyLiked) {
+            PostApi.service.likeById(postId)
+        } else {
+            PostApi.service.dislikeById(postId)
+        }
+
+        call.enqueue(object : Callback<Post> {
+            override fun onResponse(call: Call<Post>, response: Response<Post>) {
+                if (response.isSuccessful) {
+                    response.body()?.let { callback.onSuccess(it) }
+                        ?: callback.onError(RuntimeException("Empty response body"))
+                } else {
+                    callback.onError(RuntimeException("HTTP error: ${response.code()}"))
+                }
+            }
+
+            override fun onFailure(call: Call<Post>, t: Throwable) {
+                callback.onError(t as? Exception ?: Exception(t))
+            }
+        })
+    }
+
     override fun shareById(id: Long) {
         TODO("Not yet implemented")
     }
 
-    // override fun viewById(id: Long) {
-//
-//}
     override fun removeById(id: Long) {
-        PostApi.service.deleteById(id)
-            .execute()
+        PostApi.service.deleteById(id).execute()
+    }
+
+    override fun removeByIdAsync(id: Long, callback: PostRepository.RemoveCallback) {
+        PostApi.service.deleteById(id).enqueue(object : Callback<Unit> {
+            override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
+                if (response.isSuccessful) {
+                    callback.onSuccess()
+                } else {
+                    callback.onError(RuntimeException("HTTP error: ${response.code()}"))
+                }
+            }
+
+            override fun onFailure(call: Call<Unit>, t: Throwable) {
+                callback.onError(t as? Exception ?: Exception(t))
+            }
+        })
     }
 
     override fun save(post: Post): Post? {
         return try {
-            val response = PostApi.service.save(post)
-                .execute()
+            val response = PostApi.service.save(post).execute()
             if (response.isSuccessful) {
                 response.body()
             } else {
@@ -95,39 +124,24 @@ class PostRepositoryImpl() : PostRepository {
         }
     }
 
+    override fun saveAsync(post: Post, callback: PostRepository.SaveCallback) {
+        PostApi.service.save(post).enqueue(object : Callback<Post> {
+            override fun onResponse(call: Call<Post>, response: Response<Post>) {
+                if (response.isSuccessful) {
+                    response.body()?.let { callback.onSuccess(it) }
+                        ?: callback.onError(RuntimeException("Empty response body"))
+                } else {
+                    callback.onError(RuntimeException("HTTP error: ${response.code()}"))
+                }
+            }
+
+            override fun onFailure(call: Call<Post>, t: Throwable) {
+                callback.onError(t as? Exception ?: Exception(t))
+            }
+        })
+    }
+
     override fun addVideoPost(post: Post) {
         TODO("Not yet implemented")
     }
-
-    /*  override fun get(): LiveData<List<Post>> = dao.getAll().map { listPosts ->
-        listPosts.map { entity ->
-            entity.toDto()
-        }
-    }
-
-    override fun likeById(id: Long) {
-        dao.likeById(id)
-    }
-
-    override fun shareById(id: Long) {
-        dao.shareById(id)
-    }
-
-    override fun viewById(id: Long) {
-        dao.viewById(id)
-    }
-
-    override fun removeById(id: Long) {
-        dao.removeById(id)
-    }
-
-    override fun save(post: Post) {
-        dao.save(PostEntity.fromDto(post))
-    }
-
-    override fun addVideoPost(post: Post) {
-        if (dao.exists(post.id) == 0) {
-            dao.insert(post.toEntity())
-        }
-    } */
 }
