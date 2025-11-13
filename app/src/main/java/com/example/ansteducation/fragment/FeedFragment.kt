@@ -19,6 +19,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.ansteducation.databinding.FragmentFeedBinding
+import com.google.android.material.snackbar.Snackbar
 
 class FeedFragment : Fragment() {
     override fun onCreateView(
@@ -94,7 +95,7 @@ class FeedFragment : Fragment() {
         binding.list.adapter = adapter
 
         binding.swipeRefresh.setOnRefreshListener {
-            viewModel.load(true)
+            viewModel.load()
         }
 
         viewModel.data.observe(viewLifecycleOwner) { state ->
@@ -107,9 +108,18 @@ class FeedFragment : Fragment() {
                     swipeRefresh.isRefreshing = false
                 }
             }
+            if (state.responseError) {
+                state.responseErrorText?.let { errorText ->
+                    Snackbar.make(binding.root, errorText, Snackbar.LENGTH_LONG).show()
+                    viewModel.errorShown()
+                }
+            }
+            if (state.error || state.empty) {
+                Snackbar.make(binding.root, R.string.no_response, Snackbar.LENGTH_SHORT).show()
+            }
 
             binding.retry.setOnClickListener {
-                viewModel.load(slow = true)
+                viewModel.load()
             }
 
             val new =
@@ -140,4 +150,3 @@ class FeedFragment : Fragment() {
     }
 
 }
-

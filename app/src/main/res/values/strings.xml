@@ -15,4 +15,7 @@
     <string name="no_posts">No posts</string>
     <string name="error_title">Something went wrong</string>
     <string name="retry">Retry</string>
+    <string name="no_response">Server is not responding. Please, swipe to refresh</string>
+    <string name="no_response_like">Server is not responding. Please, try again</string>
+
 </resources>

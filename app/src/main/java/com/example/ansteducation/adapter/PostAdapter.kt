@@ -7,18 +7,18 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ListAdapter
 import androidx.appcompat.widget.PopupMenu
-import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.ansteducation.CountFormat
 import com.example.ansteducation.R
+import com.example.ansteducation.api.PostApi
 import com.example.ansteducation.databinding.CardPostBinding
 import com.example.ansteducation.dto.Post
-import com.example.ansteducation.viewModel.PostViewModel
-import androidx.fragment.app.viewModels
 import com.example.ansteducation.repository.PostRepositoryImpl
+import com.example.ansteducation.viewModel.PostViewModel
+import com.google.android.material.snackbar.Snackbar
 
 
 interface OnInteractionListener {
@@ -58,9 +58,8 @@ class PostViewHolder(
 
     @SuppressLint("UseKtx")
     fun bind(post: Post) {
-        val repository = PostRepositoryImpl()
-        val endpointImg = repository.getImgUrl()
-        val endpointAttach = repository.getAttachmentUrl()
+        val endpointImg = "http://10.0.2.2:9999/avatars/"
+        val endpointAttach = "http://10.0.2.2:9999/images/"
 
         binding.apply {
             attachment.visibility = View.GONE

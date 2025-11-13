@@ -4,11 +4,11 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.ansteducation.R
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.model.FeedModel
 import com.example.ansteducation.repository.PostRepository
 import com.example.ansteducation.repository.PostRepositoryImpl
-import kotlin.concurrent.thread
 
 private val empty = Post(
     id = 0,
@@ -17,16 +17,7 @@ private val empty = Post(
     published = ""
 )
 
-
 class PostViewModel(application: Application) : AndroidViewModel(application) {
-
-    val postWithVideo = Post(
-        id = 5,
-        author = "Me",
-        published = "1111111",
-        content = "Описание поста с видео",
-        video = "https://rutube.ru/video/c6cc4d620b1d4338901770a44b3e82f4/"
-    )
 
     private val repository: PostRepository = PostRepositoryImpl()
     private val _data: MutableLiveData<FeedModel> = MutableLiveData(FeedModel())
@@ -35,18 +26,37 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     val edited = MutableLiveData(empty)
 
     init {
-        load(true)
+        load()
     }
 
     fun like(post: Post) {
-        thread {
-            try {
-                val updatedPost = repository.likeById(post)
-                updatePostInList(updatedPost)
-            } catch (e: Exception) {
-                _data.postValue(FeedModel(error = true))
+        val updatedPost = post.copy(
+            likedByMe = !post.likedByMe,
+            likes = if (!post.likedByMe) post.likes + 1 else post.likes - 1
+        )
+        updatePostInList(updatedPost)
+
+        repository.likeByIdAsync(post, object : PostRepository.LikeCallback {
+            override fun onSuccess(serverPost: Post) {
+                updatePostInList(serverPost)
+                _data.postValue(
+                    _data.value?.copy(
+                        responseError = false,
+                        responseErrorText = null
+                    )
+                )
             }
-        }
+
+            override fun onError(throwable: Throwable) {
+                updatePostInList(post)
+                _data.postValue(
+                    _data.value?.copy(
+                        responseError = true,
+                        responseErrorText = getApplication<Application>().getString(R.string.no_response_like)
+                    )
+                )
+            }
+        })
     }
 
     private fun updatePostInList(updatedPost: Post) {
@@ -55,37 +65,74 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             val updatedPosts = currentState.posts.map { post ->
                 if (post.id == updatedPost.id) updatedPost else post
             }
-            _data.postValue(currentState.copy(posts = updatedPosts))
+            _data.value = currentState.copy(posts = updatedPosts)
         }
     }
 
     fun repost(id: Long) = repository.shareById(id)
-   // fun view(id: Long) = repository.viewById(id)
-    fun remove(id: Long) = repository.removeById(id)
+
+    fun remove(id: Long) {
+        val currentState = _data.value
+        if (currentState != null) {
+            val updatedPosts = currentState.posts.filter { it.id != id }
+            _data.value = currentState.copy(posts = updatedPosts)
+        }
+
+        repository.removeByIdAsync(id, object : PostRepository.RemoveCallback {
+            override fun onSuccess() {
+                load()
+            }
+
+            override fun onError(throwable: Throwable) {
+                _data.postValue(FeedModel(error = true))
+            }
+        })
+    }
 
     fun save(text: String) {
-        thread {
-            edited.value?.let {
-                val content = text.trim()
-                if (it.content != text) {
-                    repository.save(it.copy(content = content, author = "Me"))
-                }
+        edited.value?.let { post ->
+            val content = text.trim()
+            if (post.content != text) {
+                repository.saveAsync(post.copy(content = content, author = "Me"), object : PostRepository.SaveCallback {
+                    override fun onSuccess(savedPost: Post) {
+                        edited.value = empty
+                        load()
+                    }
+
+                    override fun onError(throwable: Throwable) {
+                        edited.value = empty
+                        load()
+                    }
+                })
+            } else {
+                edited.value = empty
             }
-            edited.postValue(empty)
-            load(false)
+        } ?: run {
+            edited.value = empty
         }
     }
 
-    fun load(slow: Boolean) {
-        thread {
-            _data.postValue(FeedModel(loading = true))
-            try {
-                val posts = repository.get(slow = slow)
-                _data.postValue(FeedModel(posts = posts, empty = posts.isEmpty()))
-            } catch (_: Exception) {
-                _data.postValue(FeedModel(error = true))
+    fun load() {
+        _data.value = FeedModel(loading = true)
+
+        repository.getAsync(object : PostRepository.GetAllCallback {
+            override fun onSuccess(posts: List<Post>) {
+                _data.value = FeedModel(posts = posts, empty = posts.isEmpty())
             }
-        }
+
+            override fun onError(throwable: Throwable) {
+                _data.value = FeedModel(error = true)
+            }
+        })
+    }
+
+    fun errorShown() {
+        _data.postValue(
+            _data.value?.copy(
+                responseError = false,
+                responseErrorText = null
+            )
+        )
     }
 
     fun edit(post: Post) {
@@ -93,13 +140,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun clear() {
-        thread {
-            edited.postValue(empty)
-        }
+        edited.value = empty
     }
-
-    fun addVideoPost(post: Post) {
-        repository.addVideoPost(post)
-    }
-
 }
