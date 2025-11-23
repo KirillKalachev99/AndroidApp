@@ -63,7 +63,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/error_title"
-            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintBottom_toTopOf="@id/retry"
             app:layout_constraintEnd_toEndOf="parent"
@@ -88,6 +87,8 @@
             android:id="@+id/error_group"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible"
             app:constraint_referenced_ids="error_title, retry" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

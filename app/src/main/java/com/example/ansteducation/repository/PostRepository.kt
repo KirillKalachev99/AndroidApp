@@ -1,37 +1,15 @@
 package com.example.ansteducation.repository
 
+import androidx.lifecycle.LiveData
 import com.example.ansteducation.dto.Post
 
 interface PostRepository {
-    fun get(): List<Post>
-    fun getAsync(callback: GetAllCallback)
-    fun getImgNames(): List<String>
-    fun likeById(post: Post): Post?
-    fun likeByIdAsync(post: Post, callback: LikeCallback)
-    fun shareById(id: Long)
-    fun removeById(id: Long)
-    fun removeByIdAsync(id: Long, callback: RemoveCallback)
-    fun save(post: Post): Post?
-    fun saveAsync(post: Post, callback: SaveCallback)
-    fun addVideoPost(post: Post)
-
-    interface GetAllCallback {
-        fun onSuccess(posts: List<Post>)
-        fun onError(throwable: Throwable)
-    }
-
-    interface LikeCallback {
-        fun onSuccess(post: Post)
-        fun onError(throwable: Throwable)
-    }
-
-    interface RemoveCallback {
-        fun onSuccess()
-        fun onError(throwable: Throwable)
-    }
-
-    interface SaveCallback {
-        fun onSuccess(post: Post)
-        fun onError(throwable: Throwable)
-    }
+    val data: LiveData<List<Post>>
+    suspend fun getAsync()
+    //suspend fun getImgNames(): List<String>
+    suspend fun likeByIdAsync(post: Post): Post
+    suspend fun shareById(id: Long)
+    suspend fun removeByIdAsync(id: Long)
+    suspend fun saveAsync(post: Post, update: Boolean = false): Post
+    suspend fun hasData(): Boolean
 }

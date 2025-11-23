@@ -6,7 +6,7 @@ import com.example.ansteducation.dto.Post
 
 @Entity
 data class PostEntity(
-    @PrimaryKey(autoGenerate = true)
+    @PrimaryKey
     val id: Long,
     val author: String,
     val published: String,

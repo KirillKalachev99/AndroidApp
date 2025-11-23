@@ -51,14 +51,6 @@ class FeedFragment : Fragment() {
             ownerProducer = ::requireParentFragment
         )
 
-        /* val postWithVideo = viewModel.postWithVideo
-         val videoPostExists = posts.any { it.id == postWithVideo.id }
-
-         if (!videoPostExists) {
-             viewModel.addVideoPost(postWithVideo)
-         } */
-
-
         val adapter = PostAdapter(object : OnInteractionListener {
             override fun like(post: Post) {
                 viewModel.like(post)
@@ -95,36 +87,39 @@ class FeedFragment : Fragment() {
         binding.list.adapter = adapter
 
         binding.swipeRefresh.setOnRefreshListener {
-            viewModel.load()
+            viewModel.load(forceRefresh = true)
+            binding.progress.isVisible = false
         }
 
-        viewModel.data.observe(viewLifecycleOwner) { state ->
-            adapter.submitList(state.posts)
+        viewModel.data.observe(viewLifecycleOwner) { data ->
+            adapter.submitList(data.posts)
             binding.apply {
-                progress.isVisible = state.loading
-                empty.isVisible = state.empty
-                errorGroup.isVisible = state.error
-                if (swipeRefresh.isRefreshing && !state.loading) {
-                    swipeRefresh.isRefreshing = false
-                }
-            }
-            if (state.responseError) {
-                state.responseErrorText?.let { errorText ->
-                    Snackbar.make(binding.root, errorText, Snackbar.LENGTH_LONG).show()
-                    viewModel.errorShown()
-                }
-            }
-            if (state.error || state.empty) {
-                Snackbar.make(binding.root, R.string.no_response, Snackbar.LENGTH_SHORT).show()
-            }
-
-            binding.retry.setOnClickListener {
-                viewModel.load()
+                empty.isVisible = data.empty
             }
 
             val new =
-                state.posts.size > adapter.currentList.size && adapter.currentList.isNotEmpty()
+                data.posts.size > adapter.currentList.size && adapter.currentList.isNotEmpty()
             if (new) binding.list.smoothScrollToPosition(0)
+        }
+
+        viewModel.state.observe(viewLifecycleOwner) { state ->
+            binding.apply {
+                errorGroup.isVisible = state.error
+                if (state.refreshing) {
+                    swipeRefresh.isRefreshing = true
+                } else {
+                    swipeRefresh.isRefreshing = false
+                }
+            }
+
+            if (state.error && !state.loading) {
+                Snackbar.make(binding.root, R.string.no_response, Snackbar.LENGTH_SHORT).show()
+            }
+        }
+
+
+        binding.retry.setOnClickListener {
+            viewModel.load()
         }
 
         binding.add.setOnClickListener {
