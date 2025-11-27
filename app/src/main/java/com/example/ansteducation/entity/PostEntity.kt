@@ -17,7 +17,8 @@ data class PostEntity(
     val sharedByMe: Boolean = false,
     val likedByMe: Boolean = false,
     var viewedByMe: Boolean = false,
-    var video: String? = null
+    var video: String? = null,
+    val syncStatus: String = "SYNCED"
 ) {
     fun toDto(): Post = Post(
         id = id,
@@ -46,7 +47,8 @@ data class PostEntity(
                 sharedByMe = sharedByMe,
                 likedByMe = likedByMe,
                 viewedByMe = viewedByMe,
-                video = video
+                video = video,
+                syncStatus = "SYNCED"
             )
         }
     }

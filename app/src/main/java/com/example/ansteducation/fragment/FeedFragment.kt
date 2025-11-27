@@ -2,6 +2,7 @@ package com.example.ansteducation.fragment
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -80,6 +81,9 @@ class FeedFragment : Fragment() {
                     bundleOf("postId" to post.id)
                 )
             }
+            override fun retryPost(post: Post) {
+                viewModel.retryPost(post)
+            }
         }) {
             //  viewModel.view(it.id)
         }
@@ -92,14 +96,15 @@ class FeedFragment : Fragment() {
         }
 
         viewModel.data.observe(viewLifecycleOwner) { data ->
-            adapter.submitList(data.posts)
+            val previousSize = adapter.currentList.size
+            adapter.submitList(data.posts) {
+                if (data.posts.size > previousSize) {
+                    binding.list.scrollToPosition(0)
+                }
+            }
             binding.apply {
                 empty.isVisible = data.empty
             }
-
-            val new =
-                data.posts.size > adapter.currentList.size && adapter.currentList.isNotEmpty()
-            if (new) binding.list.smoothScrollToPosition(0)
         }
 
         viewModel.state.observe(viewLifecycleOwner) { state ->
@@ -116,6 +121,7 @@ class FeedFragment : Fragment() {
                 Snackbar.make(binding.root, R.string.no_response, Snackbar.LENGTH_SHORT).show()
             }
         }
+
 
 
         binding.retry.setOnClickListener {

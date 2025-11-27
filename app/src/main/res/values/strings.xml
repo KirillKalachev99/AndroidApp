@@ -17,5 +17,6 @@
     <string name="retry">Retry</string>
     <string name="no_response">Server is not responding. Please, swipe to refresh</string>
     <string name="no_response_like">Server is not responding. Please, try again</string>
+    <string name="no_response_send_post">Couldn\'t send post to server. Please, try again</string>
 
 </resources>

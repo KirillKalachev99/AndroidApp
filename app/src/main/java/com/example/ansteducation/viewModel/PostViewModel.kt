@@ -1,11 +1,13 @@
 package com.example.ansteducation.viewModel
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
+import com.example.ansteducation.api.PostApi
 import com.example.ansteducation.db.AppDb
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.model.FeedModel
@@ -14,7 +16,6 @@ import com.example.ansteducation.repository.PostRepository
 import com.example.ansteducation.repository.PostRepositoryImpl
 import com.example.ansteducation.util.SingleLiveEvent
 import kotlinx.coroutines.launch
-import java.util.Date
 
 private val empty = Post(
     id = 0,
@@ -34,15 +35,13 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             empty = it.isEmpty(),
         )
     }
-
     private val _state = MutableLiveData(FeedModelState())
     private val _postCreated = SingleLiveEvent<Unit>()
-    val postCreated: LiveData<Unit>
-        get() = _postCreated
 
     val state: LiveData<FeedModelState>
         get() = _state
     val edited = MutableLiveData(empty)
+    private var isSaving = false
 
     init {
         load()
@@ -54,7 +53,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             // TODO:
         }
     }
-
 
     fun repost(id: Long) {
         viewModelScope.launch {
@@ -70,8 +68,11 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-
     fun save(content: String) {
+        if (isSaving) {
+            return
+        }
+        isSaving = true
         viewModelScope.launch {
             try {
                 val currentEdited = edited.value ?: empty
@@ -81,7 +82,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                         id = 0,
                         author = "Me",
                         content = content,
-                        published = Date().toString(),
+                        published = "",
                         likes = 0,
                         shares = 0,
                         views = 0,
@@ -90,19 +91,41 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                         viewedByMe = false
                     )
                     repository.saveAsync(newPost, update = false)
+
                 } else {
                     val updatedPost = currentEdited.copy(content = content)
                     repository.saveAsync(updatedPost, update = true)
                 }
 
-                _postCreated.value = Unit
                 edited.value = empty
-                load(true)
+                _postCreated.value = Unit
+
             } catch (e: Exception) {
-                throw e
+                Log.e("PostViewModel", "Save error: ${e.message}")
+            } finally {
+                isSaving = false
             }
         }
     }
+
+    fun retryPost(post: Post) {
+        viewModelScope.launch {
+            try {
+                val sendingPost = post.copy(id = System.currentTimeMillis())
+                (repository as PostRepositoryImpl).updatePost(post.id, sendingPost)
+
+                val serverPost = PostApi.service.save(post.copy(id = 0))
+
+                repository.updatePost(sendingPost.id, serverPost)
+
+            } catch (e: Exception) {
+                Log.e("PostViewModel", "Retry failed: ${e.message}")
+                val failedPost = post.copy(id = -System.currentTimeMillis())
+                (repository as PostRepositoryImpl).updatePost(post.id, failedPost)
+            }
+        }
+    }
+
     fun load(forceRefresh: Boolean = false) {
         viewModelScope.launch {
             if (forceRefresh) {
@@ -113,7 +136,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 repository.getAsync()
                 _state.value = FeedModelState()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 val hasDataAfterError = repository.hasData()
                 if (!hasDataAfterError) {
                     _state.value = FeedModelState(error = true)

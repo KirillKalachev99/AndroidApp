@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.example.ansteducation.dao.PostDao
 import com.example.ansteducation.entity.PostEntity
 
-@Database(entities = [PostEntity::class], version = 4)
+@Database(entities = [PostEntity::class], version = 5)
 abstract class AppDb: RoomDatabase(){
     abstract fun postDao(): PostDao
 

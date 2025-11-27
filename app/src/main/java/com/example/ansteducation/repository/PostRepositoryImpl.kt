@@ -7,7 +7,9 @@ import com.example.ansteducation.api.PostApi
 import com.example.ansteducation.dao.PostDao
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.entity.PostEntity
-import com.example.ansteducation.entity.toEntity
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
 
@@ -28,30 +30,30 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
         val postId = post.id
         val alreadyLiked = post.likedByMe
 
+        dao.likeById(postId)
+
+        val locallyUpdatedPost = post.copy(
+            likedByMe = !alreadyLiked,
+            likes = if (!alreadyLiked) post.likes + 1 else post.likes - 1
+        )
+
         try {
-            val updatedPost = if (!alreadyLiked) {
+            val serverUpdatedPost = if (!alreadyLiked) {
                 PostApi.service.likeById(postId)
             } else {
                 PostApi.service.dislikeById(postId)
             }
+            dao.insert(PostEntity.fromDto(serverUpdatedPost))
+            return serverUpdatedPost
 
-            dao.insert(PostEntity.fromDto(updatedPost))
-            return updatedPost
-
-        } catch (e: Exception) {
-            dao.likeById(postId)
-
-            return post.copy(
-                likedByMe = !alreadyLiked,
-                likes = if (!alreadyLiked) post.likes + 1 else post.likes - 1
-            )
+        } catch (_: Exception) {
+            return locallyUpdatedPost
         }
     }
 
     override suspend fun shareById(id: Long) {
         TODO("Not yet implemented")
     }
-
 
     override suspend fun removeByIdAsync(id: Long) {
         try {
@@ -62,27 +64,30 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
         }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     override suspend fun saveAsync(post: Post, update: Boolean): Post {
-        return try {
-            if (update) {
-                val updatedPost = PostApi.service.save(post)
-                dao.insert(PostEntity.fromDto(updatedPost))
-                updatedPost
-            } else {
-                val newPost = PostApi.service.save(post)
-                dao.insert(PostEntity.fromDto(newPost))
-                newPost
+        val localId = System.currentTimeMillis()
+        val localPost = post.copy(id = localId)
+        dao.insert(PostEntity.fromDto(localPost))
+
+        if (!update) {
+            kotlinx.coroutines.GlobalScope.launch {
+                try {
+                    val serverPost = PostApi.service.save(post.copy(id = 0))
+                    dao.removeById(localId)
+                    dao.insert(PostEntity.fromDto(serverPost))
+
+                } catch (e: Exception) {
+                    Log.e("PostRepository", "Background sync failed: ${e.message}")
+                    val failedPost = localPost.copy(id = -localId)
+                    dao.removeById(localId)
+                    dao.insert(PostEntity.fromDto(failedPost))
+                }
             }
-        } catch (e: Exception) {
-            val localPost = if (post.id == 0L) {
-                post.copy(id = System.currentTimeMillis())
-            } else {
-                post
-            }
-            dao.insert(PostEntity.fromDto(localPost))
-            localPost
         }
+        return localPost
     }
+
 
     override suspend fun hasData(): Boolean {
         return try {
@@ -91,6 +96,11 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
         } catch (e: Exception) {
             false
         }
+    }
+
+    override suspend fun updatePost(oldId: Long, newPost: Post) {
+        dao.removeById(oldId)
+        dao.insert(PostEntity.fromDto(newPost))
     }
 
     //    override suspend fun getImgNames(): List<String> {

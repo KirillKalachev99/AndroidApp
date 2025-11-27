@@ -6,5 +6,5 @@
     <color name="confirm_button_color">#A5D6A7</color>
     <color name="bottom_appbar_color">#CE93D8</color>
     <color name="hint_color">#546E7A</color>
-
+    <color name="error_color">#FFFF0000</color>
 </resources>

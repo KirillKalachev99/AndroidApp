@@ -2,6 +2,7 @@ package com.example.ansteducation.repository
 
 import androidx.lifecycle.LiveData
 import com.example.ansteducation.dto.Post
+import com.example.ansteducation.entity.PostEntity
 
 interface PostRepository {
     val data: LiveData<List<Post>>
@@ -12,4 +13,5 @@ interface PostRepository {
     suspend fun removeByIdAsync(id: Long)
     suspend fun saveAsync(post: Post, update: Boolean = false): Post
     suspend fun hasData(): Boolean
+    suspend fun updatePost(oldId: Long, newPost: Post)
 }
