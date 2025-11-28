@@ -111,17 +111,16 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     fun retryPost(post: Post) {
         viewModelScope.launch {
             try {
-                val sendingPost = post.copy(id = System.currentTimeMillis())
+                val sendingId = System.currentTimeMillis()
+                val sendingPost = post.copy(id = sendingId)
                 (repository as PostRepositoryImpl).updatePost(post.id, sendingPost)
 
                 val serverPost = PostApi.service.save(post.copy(id = 0))
 
-                repository.updatePost(sendingPost.id, serverPost)
+                repository.updatePost(sendingId, serverPost)
 
             } catch (e: Exception) {
                 Log.e("PostViewModel", "Retry failed: ${e.message}")
-                val failedPost = post.copy(id = -System.currentTimeMillis())
-                (repository as PostRepositoryImpl).updatePost(post.id, failedPost)
             }
         }
     }

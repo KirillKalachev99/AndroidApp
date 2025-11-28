@@ -10,7 +10,7 @@ import com.example.ansteducation.entity.PostEntity
 @Dao
 interface PostDao {
 
-    @Query("SELECT * FROM PostEntity ORDER BY id DESC")
+    @Query("SELECT * FROM PostEntity ORDER BY ABS(id) DESC, id DESC")
     fun getAll(): LiveData<List<PostEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

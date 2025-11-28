@@ -8,8 +8,8 @@ import com.example.ansteducation.dao.PostDao
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.entity.PostEntity
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 
 class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
 
@@ -43,10 +43,10 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
             } else {
                 PostApi.service.dislikeById(postId)
             }
-            dao.insert(PostEntity.fromDto(serverUpdatedPost))
             return serverUpdatedPost
 
         } catch (_: Exception) {
+            dao.likeById(postId)
             return locallyUpdatedPost
         }
     }
@@ -68,26 +68,26 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
     override suspend fun saveAsync(post: Post, update: Boolean): Post {
         val localId = System.currentTimeMillis()
         val localPost = post.copy(id = localId)
+
         dao.insert(PostEntity.fromDto(localPost))
 
         if (!update) {
-            kotlinx.coroutines.GlobalScope.launch {
-                try {
-                    val serverPost = PostApi.service.save(post.copy(id = 0))
-                    dao.removeById(localId)
-                    dao.insert(PostEntity.fromDto(serverPost))
+            supervisorScope {
+                launch {
+                    try {
+                        val serverPost = PostApi.service.save(post.copy(id = 0))
 
-                } catch (e: Exception) {
-                    Log.e("PostRepository", "Background sync failed: ${e.message}")
-                    val failedPost = localPost.copy(id = -localId)
-                    dao.removeById(localId)
-                    dao.insert(PostEntity.fromDto(failedPost))
+                        updatePost(localId, serverPost)
+
+                    } catch (_: Exception) {
+                        val failedPost = localPost.copy(id = -localId)
+                        updatePost(localId, failedPost)
+                    }
                 }
             }
         }
         return localPost
     }
-
 
     override suspend fun hasData(): Boolean {
         return try {
