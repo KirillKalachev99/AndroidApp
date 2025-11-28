@@ -1,6 +1,5 @@
 package com.example.ansteducation.repository
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.map
 import com.example.ansteducation.api.PostApi
@@ -93,7 +92,7 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
         return try {
             val count = dao.getCount()
             count > 0
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
