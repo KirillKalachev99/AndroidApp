@@ -3,7 +3,7 @@ package com.example.ansteducation.dto
 data class Post(
     val id: Long,
     val author: String,
-    val authorAvatar: String = "",
+    val authorAvatar: String? = "",
     val published: String,
     val content: String,
     val likes: Int = 0,
@@ -13,5 +13,5 @@ data class Post(
     val likedByMe: Boolean = false,
     var viewedByMe: Boolean = false,
     var video: String? = null,
-    val attachment: Attachment? = null
+    val attachment: Attachment? = null,
 )

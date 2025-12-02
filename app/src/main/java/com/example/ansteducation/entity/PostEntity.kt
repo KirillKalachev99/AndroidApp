@@ -6,9 +6,10 @@ import com.example.ansteducation.dto.Post
 
 @Entity
 data class PostEntity(
-    @PrimaryKey(autoGenerate = true)
+    @PrimaryKey
     val id: Long,
     val author: String,
+    val authorAvatar: String? = null,
     val published: String,
     val content: String,
     val likes: Int = 0,
@@ -17,11 +18,13 @@ data class PostEntity(
     val sharedByMe: Boolean = false,
     val likedByMe: Boolean = false,
     var viewedByMe: Boolean = false,
-    var video: String? = null
+    var video: String? = null,
+    val syncStatus: String = "SYNCED"
 ) {
     fun toDto(): Post = Post(
         id = id,
         author = author,
+        authorAvatar = authorAvatar,
         published = published,
         content = content,
         likes = likes,
@@ -38,6 +41,7 @@ data class PostEntity(
             PostEntity(
                 id = id,
                 author = author,
+                authorAvatar = authorAvatar,
                 published = published,
                 content = content,
                 likes = likes,
@@ -46,7 +50,8 @@ data class PostEntity(
                 sharedByMe = sharedByMe,
                 likedByMe = likedByMe,
                 viewedByMe = viewedByMe,
-                video = video
+                video = video,
+                syncStatus = "SYNCED"
             )
         }
     }

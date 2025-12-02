@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.example.ansteducation.dao.PostDao
 import com.example.ansteducation.entity.PostEntity
 
-@Database(entities = [PostEntity::class], version = 3)
+@Database(entities = [PostEntity::class], version = 6)
 abstract class AppDb: RoomDatabase(){
     abstract fun postDao(): PostDao
 
@@ -23,7 +23,6 @@ abstract class AppDb: RoomDatabase(){
 
         private fun buildDatabase(context: Context): AppDb =
             Room.databaseBuilder(context, AppDb::class.java, "app.db")
-                .allowMainThreadQueries()
                 .fallbackToDestructiveMigration(true)
                 .build()
     }

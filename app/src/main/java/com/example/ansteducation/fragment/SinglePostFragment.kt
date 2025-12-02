@@ -56,6 +56,10 @@ class SinglePostFragment: Fragment() {
                     openVideoUrl(url)
                 }
 
+                override fun retryPost(post: Post) {
+                    viewModel.retryPost(post)
+                }
+
             }, null)
 
         val post = viewModel.data.value?.posts?.find { it.id == postId }

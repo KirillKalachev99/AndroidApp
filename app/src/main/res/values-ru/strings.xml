@@ -18,4 +18,5 @@
     <string name="retry">Попробовать снова</string>
     <string name="no_response">Ошибка сервера. Потяните вниз для повторного запроса</string>
     <string name="no_response_like">Не удалось поставить лайк. Попробуйте снова</string>
+    <string name="no_response_send_post">Не удалось отправить пост на сервер. Попробуйте снова</string>
 </resources>

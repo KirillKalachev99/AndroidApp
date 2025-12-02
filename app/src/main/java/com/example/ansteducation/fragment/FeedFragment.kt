@@ -2,6 +2,7 @@ package com.example.ansteducation.fragment
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -51,14 +52,6 @@ class FeedFragment : Fragment() {
             ownerProducer = ::requireParentFragment
         )
 
-        /* val postWithVideo = viewModel.postWithVideo
-         val videoPostExists = posts.any { it.id == postWithVideo.id }
-
-         if (!videoPostExists) {
-             viewModel.addVideoPost(postWithVideo)
-         } */
-
-
         val adapter = PostAdapter(object : OnInteractionListener {
             override fun like(post: Post) {
                 viewModel.like(post)
@@ -88,6 +81,9 @@ class FeedFragment : Fragment() {
                     bundleOf("postId" to post.id)
                 )
             }
+            override fun retryPost(post: Post) {
+                viewModel.retryPost(post)
+            }
         }) {
             //  viewModel.view(it.id)
         }
@@ -95,36 +91,41 @@ class FeedFragment : Fragment() {
         binding.list.adapter = adapter
 
         binding.swipeRefresh.setOnRefreshListener {
-            viewModel.load()
+            viewModel.load(forceRefresh = true)
+            binding.progress.isVisible = false
         }
 
-        viewModel.data.observe(viewLifecycleOwner) { state ->
-            adapter.submitList(state.posts)
+        viewModel.data.observe(viewLifecycleOwner) { data ->
+            val previousSize = adapter.currentList.size
+            adapter.submitList(data.posts) {
+                if (data.posts.size > previousSize) {
+                    binding.list.scrollToPosition(0)
+                }
+            }
             binding.apply {
-                progress.isVisible = state.loading
-                empty.isVisible = state.empty
+                empty.isVisible = data.empty
+            }
+        }
+
+        viewModel.state.observe(viewLifecycleOwner) { state ->
+            binding.apply {
                 errorGroup.isVisible = state.error
-                if (swipeRefresh.isRefreshing && !state.loading) {
+                if (state.refreshing) {
+                    swipeRefresh.isRefreshing = true
+                } else {
                     swipeRefresh.isRefreshing = false
                 }
             }
-            if (state.responseError) {
-                state.responseErrorText?.let { errorText ->
-                    Snackbar.make(binding.root, errorText, Snackbar.LENGTH_LONG).show()
-                    viewModel.errorShown()
-                }
-            }
-            if (state.error || state.empty) {
+
+            if (state.error && !state.loading) {
                 Snackbar.make(binding.root, R.string.no_response, Snackbar.LENGTH_SHORT).show()
             }
+        }
 
-            binding.retry.setOnClickListener {
-                viewModel.load()
-            }
 
-            val new =
-                state.posts.size > adapter.currentList.size && adapter.currentList.isNotEmpty()
-            if (new) binding.list.smoothScrollToPosition(0)
+
+        binding.retry.setOnClickListener {
+            viewModel.load()
         }
 
         binding.add.setOnClickListener {

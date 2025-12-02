@@ -1,10 +1,12 @@
 package com.example.ansteducation.adapter
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -14,13 +16,15 @@ import com.example.ansteducation.R
 import com.example.ansteducation.databinding.CardPostBinding
 import com.example.ansteducation.dto.Post
 
+
 interface OnInteractionListener {
     fun like(post: Post)
     fun share(post: Post)
     fun remove(post: Post)
     fun edit(post: Post)
     fun playVideo(url: String)
-    fun onPostClick(post: Post){}
+    fun onPostClick(post: Post) {}
+    fun retryPost(post: Post)
 }
 
 typealias onItemViewListener = (post: Post) -> Unit
@@ -38,6 +42,7 @@ class PostAdapter(
 
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
         val post = getItem(position)
+        Log.d("ADAPTER_DEBUG", "Position: $position, ID: ${post.id}, Failed: ${post.id < 0}")
         holder.bind(post)
         holder.viewed(post)
     }
@@ -53,6 +58,12 @@ class PostViewHolder(
     fun bind(post: Post) {
         val endpointImg = "http://10.0.2.2:9999/avatars/"
         val endpointAttach = "http://10.0.2.2:9999/images/"
+        val isNormalPost = post.id > 0 && post.id < 1_000_000_000_000L
+        val isSending = post.id > 1_000_000_000_000L
+        val isFailed = post.id < 0
+
+        binding.sendingProgress.isVisible = isSending
+        binding.errorToSendPostGroup.isVisible = isFailed
 
         binding.apply {
             attachment.visibility = View.GONE
@@ -67,16 +78,13 @@ class PostViewHolder(
             author.text = post.author
             published.text = post.published
             content.text = post.content
+            like.isEnabled = isNormalPost
+            share.isEnabled = isNormalPost
+            menu.isEnabled = isNormalPost
             like.text = CountFormat.format(post.likes)
             share.text = CountFormat.format(post.shares)
             seen.text = CountFormat.format(post.views)
             like.isChecked = post.likedByMe
-            like.setOnClickListener {
-                onInteractionListener.like(post)
-            }
-            share.setOnClickListener {
-                onInteractionListener.share(post)
-            }
             menu.setOnClickListener {
                 PopupMenu(it.context, it).apply {
                     inflate(R.menu.menu_post)
@@ -86,10 +94,12 @@ class PostViewHolder(
                                 onInteractionListener.remove(post)
                                 true
                             }
+
                             R.id.edit -> {
                                 onInteractionListener.edit(post)
                                 true
                             }
+
                             else -> false
                         }
                     }
@@ -107,6 +117,17 @@ class PostViewHolder(
             }
             root.setOnClickListener {
                 onInteractionListener.onPostClick(post)
+            }
+            refreshBotton.setOnClickListener {
+                if (isFailed) {
+                    onInteractionListener.retryPost(post)
+                }
+            }
+            like.setOnClickListener {
+                onInteractionListener.like(post)
+            }
+            share.setOnClickListener {
+                onInteractionListener.share(post)
             }
         }
     }

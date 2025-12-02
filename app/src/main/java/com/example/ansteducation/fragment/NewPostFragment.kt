@@ -21,12 +21,11 @@ class NewPostFragment : Fragment() {
         ownerProducer = ::requireParentFragment
     )
 
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         val binding = FragmentNewPostBinding.inflate(inflater, container, false)
 
         arguments?.textArg?.let(binding.content::setText)

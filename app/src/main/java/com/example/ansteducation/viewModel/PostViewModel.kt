@@ -1,14 +1,21 @@
 package com.example.ansteducation.viewModel
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.example.ansteducation.R
+import androidx.lifecycle.map
+import androidx.lifecycle.viewModelScope
+import com.example.ansteducation.api.PostApi
+import com.example.ansteducation.db.AppDb
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.model.FeedModel
+import com.example.ansteducation.model.FeedModelState
 import com.example.ansteducation.repository.PostRepository
 import com.example.ansteducation.repository.PostRepositoryImpl
+import com.example.ansteducation.util.SingleLiveEvent
+import kotlinx.coroutines.launch
 
 private val empty = Post(
     id = 0,
@@ -19,121 +26,126 @@ private val empty = Post(
 
 class PostViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository: PostRepository = PostRepositoryImpl()
-    private val _data: MutableLiveData<FeedModel> = MutableLiveData(FeedModel())
-    val data: LiveData<FeedModel>
-        get() = _data
+    private val repository: PostRepository = PostRepositoryImpl(
+        AppDb.getInstance(application).postDao()
+    )
+    val data: LiveData<FeedModel> = repository.data.map {
+        FeedModel(
+            posts = it,
+            empty = it.isEmpty(),
+        )
+    }
+    private val _state = MutableLiveData(FeedModelState())
+    private val _postCreated = SingleLiveEvent<Unit>()
+
+    val state: LiveData<FeedModelState>
+        get() = _state
     val edited = MutableLiveData(empty)
+    private var isSaving = false
 
     init {
         load()
     }
 
     fun like(post: Post) {
-        val updatedPost = post.copy(
-            likedByMe = !post.likedByMe,
-            likes = if (!post.likedByMe) post.likes + 1 else post.likes - 1
-        )
-        updatePostInList(updatedPost)
-
-        repository.likeByIdAsync(post, object : PostRepository.LikeCallback {
-            override fun onSuccess(serverPost: Post) {
-                updatePostInList(serverPost)
-                _data.postValue(
-                    _data.value?.copy(
-                        responseError = false,
-                        responseErrorText = null
-                    )
-                )
-            }
-
-            override fun onError(throwable: Throwable) {
-                updatePostInList(post)
-                _data.postValue(
-                    _data.value?.copy(
-                        responseError = true,
-                        responseErrorText = getApplication<Application>().getString(R.string.no_response_like)
-                    )
-                )
-            }
-        })
-    }
-
-    private fun updatePostInList(updatedPost: Post) {
-        val currentState = _data.value
-        if (currentState != null) {
-            val updatedPosts = currentState.posts.map { post ->
-                if (post.id == updatedPost.id) updatedPost else post
-            }
-            _data.value = currentState.copy(posts = updatedPosts)
+        viewModelScope.launch {
+            repository.likeByIdAsync(post)
+            // TODO:
         }
     }
 
-    fun repost(id: Long) = repository.shareById(id)
+    fun repost(id: Long) {
+        viewModelScope.launch {
+            repository.shareById(id)
+            // TODO:
+        }
+    }
 
     fun remove(id: Long) {
-        val currentState = _data.value
-        if (currentState != null) {
-            val updatedPosts = currentState.posts.filter { it.id != id }
-            _data.value = currentState.copy(posts = updatedPosts)
+        viewModelScope.launch {
+            repository.removeByIdAsync(id)
+            // TODO:
         }
-
-        repository.removeByIdAsync(id, object : PostRepository.RemoveCallback {
-            override fun onSuccess() {
-                load()
-            }
-
-            override fun onError(throwable: Throwable) {
-                _data.postValue(FeedModel(error = true))
-            }
-        })
     }
 
-    fun save(text: String) {
-        edited.value?.let { post ->
-            val content = text.trim()
-            if (post.content != text) {
-                repository.saveAsync(post.copy(content = content, author = "Me"), object : PostRepository.SaveCallback {
-                    override fun onSuccess(savedPost: Post) {
-                        edited.value = empty
-                        load()
-                    }
+    fun save(content: String) {
+        if (isSaving) {
+            return
+        }
+        isSaving = true
+        viewModelScope.launch {
+            try {
+                val currentEdited = edited.value ?: empty
 
-                    override fun onError(throwable: Throwable) {
-                        edited.value = empty
-                        load()
-                    }
-                })
-            } else {
+                if (currentEdited.id == 0L) {
+                    val newPost = Post(
+                        id = 0,
+                        author = "Me",
+                        content = content,
+                        published = "",
+                        likes = 0,
+                        shares = 0,
+                        views = 0,
+                        likedByMe = false,
+                        sharedByMe = false,
+                        viewedByMe = false
+                    )
+                    repository.saveAsync(newPost, update = false)
+
+                } else {
+                    val updatedPost = currentEdited.copy(content = content)
+                    repository.saveAsync(updatedPost, update = true)
+                }
+
                 edited.value = empty
+                _postCreated.value = Unit
+
+            } catch (e: Exception) {
+                Log.e("PostViewModel", "Save error: ${e.message}")
+            } finally {
+                isSaving = false
             }
-        } ?: run {
-            edited.value = empty
         }
     }
 
-    fun load() {
-        _data.value = FeedModel(loading = true)
+    fun retryPost(post: Post) {
+        viewModelScope.launch {
+            try {
+                val sendingId = System.currentTimeMillis()
+                val sendingPost = post.copy(id = sendingId)
+                (repository as PostRepositoryImpl).updatePost(post.id, sendingPost)
 
-        repository.getAsync(object : PostRepository.GetAllCallback {
-            override fun onSuccess(posts: List<Post>) {
-                _data.value = FeedModel(posts = posts, empty = posts.isEmpty())
-            }
+                val serverPost = PostApi.service.save(post.copy(id = 0))
 
-            override fun onError(throwable: Throwable) {
-                _data.value = FeedModel(error = true)
+                repository.updatePost(sendingId, serverPost)
+
+            } catch (e: Exception) {
+                Log.e("PostViewModel", "Retry failed: ${e.message}")
             }
-        })
+        }
     }
 
-    fun errorShown() {
-        _data.postValue(
-            _data.value?.copy(
-                responseError = false,
-                responseErrorText = null
-            )
-        )
+    fun load(forceRefresh: Boolean = false) {
+        viewModelScope.launch {
+            if (forceRefresh) {
+                _state.value = FeedModelState(refreshing = true, error = false)
+            } else {
+                _state.value = FeedModelState(refreshing = true, loading = true, error = false)
+            }
+            try {
+                repository.getAsync()
+                _state.value = FeedModelState()
+            } catch (_: Exception) {
+                val hasDataAfterError = repository.hasData()
+                if (!hasDataAfterError) {
+                    _state.value = FeedModelState(error = true)
+                } else {
+                    _state.value = FeedModelState()
+                }
+            }
+        }
     }
+
 
     fun edit(post: Post) {
         edited.value = post
@@ -142,4 +154,5 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     fun clear() {
         edited.value = empty
     }
+
 }
