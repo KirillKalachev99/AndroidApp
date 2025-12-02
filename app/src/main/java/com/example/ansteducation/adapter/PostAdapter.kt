@@ -1,11 +1,9 @@
 package com.example.ansteducation.adapter
 
 import android.annotation.SuppressLint
-import android.app.Application
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ListAdapter
 import androidx.appcompat.widget.PopupMenu
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -13,13 +11,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.ansteducation.CountFormat
 import com.example.ansteducation.R
-import com.example.ansteducation.api.PostApi
 import com.example.ansteducation.databinding.CardPostBinding
 import com.example.ansteducation.dto.Post
-import com.example.ansteducation.repository.PostRepositoryImpl
-import com.example.ansteducation.viewModel.PostViewModel
-import com.google.android.material.snackbar.Snackbar
-
 
 interface OnInteractionListener {
     fun like(post: Post)
