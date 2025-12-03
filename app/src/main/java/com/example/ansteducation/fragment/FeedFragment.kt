@@ -2,7 +2,6 @@ package com.example.ansteducation.fragment
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,6 +20,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.ansteducation.databinding.FragmentFeedBinding
 import com.google.android.material.snackbar.Snackbar
+import java.util.Locale
 
 class FeedFragment : Fragment() {
     override fun onCreateView(
@@ -30,6 +30,8 @@ class FeedFragment : Fragment() {
     ): View {
 
         val binding = FragmentFeedBinding.inflate(inflater, container, false)
+        val currentLocale = Locale.getDefault()
+        val language = currentLocale.language
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.navHostFragment) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -107,14 +109,21 @@ class FeedFragment : Fragment() {
             }
         }
 
+        viewModel.newerCount.observe(viewLifecycleOwner) {
+            println(it)
+            binding.apply {
+                newerButton.isVisible = it > 0
+                when (language) {
+                    "ru" -> newerButton.text = getString(R.string.newer_posts) + " " + it.toString()
+                    else -> newerButton.text = "Show $it new posts"
+                }
+            }
+        }
+
         viewModel.state.observe(viewLifecycleOwner) { state ->
             binding.apply {
                 errorGroup.isVisible = state.error
-                if (state.refreshing) {
-                    swipeRefresh.isRefreshing = true
-                } else {
-                    swipeRefresh.isRefreshing = false
-                }
+                swipeRefresh.isRefreshing = state.refreshing
             }
 
             if (state.error && !state.loading) {
@@ -131,6 +140,10 @@ class FeedFragment : Fragment() {
         binding.add.setOnClickListener {
             findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
             viewModel.clear()
+        }
+
+        binding.newerButton.setOnClickListener {
+            viewModel.addNewer()
         }
 
         return binding.root

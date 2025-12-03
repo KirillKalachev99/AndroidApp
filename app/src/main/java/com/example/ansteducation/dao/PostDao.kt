@@ -1,17 +1,17 @@
 package com.example.ansteducation.dao
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.ansteducation.entity.PostEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PostDao {
 
     @Query("SELECT * FROM PostEntity ORDER BY ABS(id) DESC, id DESC")
-    fun getAll(): LiveData<List<PostEntity>>
+    fun getAll(): Flow<List<PostEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(post: PostEntity)
