@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.map
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.ansteducation.api.PostApi
 import com.example.ansteducation.db.AppDb
@@ -15,6 +15,9 @@ import com.example.ansteducation.model.FeedModelState
 import com.example.ansteducation.repository.PostRepository
 import com.example.ansteducation.repository.PostRepositoryImpl
 import com.example.ansteducation.util.SingleLiveEvent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 private val empty = Post(
@@ -29,12 +32,10 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: PostRepository = PostRepositoryImpl(
         AppDb.getInstance(application).postDao()
     )
-    val data: LiveData<FeedModel> = repository.data.map {
-        FeedModel(
-            posts = it,
-            empty = it.isEmpty(),
-        )
-    }
+    val data: LiveData<FeedModel> = repository.data.map { FeedModel(it, it.isEmpty()) }
+        .catch { it.printStackTrace() }
+        .asLiveData(Dispatchers.Default)
+
     private val _state = MutableLiveData(FeedModelState())
     private val _postCreated = SingleLiveEvent<Unit>()
 

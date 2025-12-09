@@ -1,12 +1,11 @@
 package com.example.ansteducation.repository
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.map
 import com.example.ansteducation.api.PostApi
 import com.example.ansteducation.dao.PostDao
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.entity.PostEntity
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 
@@ -21,9 +20,7 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
         }
     }
 
-    override val data: LiveData<List<Post>> = dao.getAll().map {
-        it.map { entity -> entity.toDto() }
-    }
+    override val data = dao.getAll().map { it.map { it.toDto() } }
 
     override suspend fun likeByIdAsync(post: Post): Post {
         val postId = post.id

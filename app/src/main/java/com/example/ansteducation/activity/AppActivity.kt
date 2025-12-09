@@ -27,6 +27,7 @@ class AppActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        supportActionBar
 
         intent?.let {
             if (it.action != Intent.ACTION_SEND) return@let
@@ -68,5 +69,15 @@ class AppActivity : AppCompatActivity() {
         }
 
         requestPermissions(arrayOf(permission), 1)
+    }
+
+    fun showActionBar(show: Boolean) {
+        supportActionBar?.let {
+            if (show) {
+                it.show()
+            } else {
+                it.hide()
+            }
+        }
     }
 }

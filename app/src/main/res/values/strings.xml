@@ -3,6 +3,7 @@
     <string name="nmedia">NMedia!</string>
     <string name="menu_remove">Remove</string>
     <string name="menu_edit">Edit</string>
+    <string name="save">Save</string>
     <string name="error_empty_content">Content can\'t be empty</string>
     <string name="post_text">Post text</string>
     <string name="chooser_share_post">Share post</string>
@@ -15,6 +16,8 @@
     <string name="no_posts">No posts</string>
     <string name="error_title">Something went wrong</string>
     <string name="retry">Retry</string>
+    <string name="new_post">Create your new post</string>
+    <string name="your_feed">Your feed</string>
     <string name="no_response">Server is not responding. Please, swipe to refresh</string>
     <string name="no_response_like">Server is not responding. Please, try again</string>
     <string name="no_response_send_post">Couldn\'t send post to server. Please, try again</string>

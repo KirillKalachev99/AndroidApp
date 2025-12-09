@@ -2,10 +2,10 @@ package com.example.ansteducation.fragment
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.ansteducation.R
@@ -19,6 +19,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.example.ansteducation.activity.AppActivity
 import com.example.ansteducation.databinding.FragmentFeedBinding
 import com.google.android.material.snackbar.Snackbar
 
@@ -31,22 +32,6 @@ class FeedFragment : Fragment() {
 
         val binding = FragmentFeedBinding.inflate(inflater, container, false)
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.navHostFragment) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            val horizontalPadding =
-                systemBars.left + resources.getDimensionPixelSize(R.dimen.common_margin)
-            val topPadding = systemBars.top + resources.getDimensionPixelSize(R.dimen.common_margin)
-            val bottomPadding =
-                systemBars.bottom + resources.getDimensionPixelSize(R.dimen.common_margin)
-
-            v.setPadding(
-                horizontalPadding,
-                topPadding,
-                horizontalPadding,
-                bottomPadding
-            )
-            insets
-        }
 
         val viewModel: PostViewModel by viewModels(
             ownerProducer = ::requireParentFragment
@@ -122,8 +107,6 @@ class FeedFragment : Fragment() {
             }
         }
 
-
-
         binding.retry.setOnClickListener {
             viewModel.load()
         }
@@ -150,4 +133,9 @@ class FeedFragment : Fragment() {
         startActivity(intent)
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        (activity as? AppActivity)?.showActionBar(true)
+        (activity as? AppCompatActivity)?.supportActionBar?.title = getString(R.string.your_feed)
+    }
 }
