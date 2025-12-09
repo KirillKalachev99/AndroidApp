@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.asLiveData
+import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import com.example.ansteducation.api.PostApi
 import com.example.ansteducation.db.AppDb
@@ -16,6 +17,7 @@ import com.example.ansteducation.repository.PostRepository
 import com.example.ansteducation.repository.PostRepositoryImpl
 import com.example.ansteducation.util.SingleLiveEvent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -44,14 +46,44 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     val edited = MutableLiveData(empty)
     private var isSaving = false
 
+    private val _shouldCheckNewPosts = MutableLiveData(true)
+    val newerCount = _shouldCheckNewPosts.switchMap { shouldCheck ->
+        if (shouldCheck) {
+            data.switchMap {
+                repository.getNewer(it.posts.firstOrNull()?.id ?: 0)
+                    .asLiveData(Dispatchers.Default)
+            }
+        } else {
+            MutableLiveData(0).apply { value = 0 }
+        }
+    }
+
+
+
+
     init {
         load()
+    }
+
+    fun addNewer() {
+        _shouldCheckNewPosts.value = false
+        viewModelScope.launch {
+            try {
+                repository.addNewer()
+                viewModelScope.launch {
+                    delay(2000)
+                    _shouldCheckNewPosts.value = true
+                }
+            } catch (e: Exception) {
+                Log.e("PostViewModel", "Error adding newer: ${e.message}")
+                _shouldCheckNewPosts.value = true
+            }
+        }
     }
 
     fun like(post: Post) {
         viewModelScope.launch {
             repository.likeByIdAsync(post)
-            // TODO:
         }
     }
 
@@ -65,7 +97,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     fun remove(id: Long) {
         viewModelScope.launch {
             repository.removeByIdAsync(id)
-            // TODO:
         }
     }
 
@@ -146,7 +177,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-
 
     fun edit(post: Post) {
         edited.value = post

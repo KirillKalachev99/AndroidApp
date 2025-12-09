@@ -7,6 +7,8 @@ interface PostRepository {
     val data: Flow<List<Post>>
     suspend fun getAsync()
     //suspend fun getImgNames(): List<String>
+    fun getNewer(id: Long): Flow<Int>
+    suspend fun addNewer()
     suspend fun likeByIdAsync(post: Post): Post
     suspend fun shareById(id: Long)
     suspend fun removeByIdAsync(id: Long)

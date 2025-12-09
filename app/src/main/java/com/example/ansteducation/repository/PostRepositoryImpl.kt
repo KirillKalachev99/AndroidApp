@@ -5,11 +5,21 @@ import com.example.ansteducation.dao.PostDao
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.entity.PostEntity
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlin.collections.map
 
 class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
+
+    private val mutex = Mutex()
+    private var cachedNewPosts: List<Post> = emptyList()
 
     override suspend fun getAsync() {
         try {
@@ -17,6 +27,36 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
             dao.insert(posts.map(PostEntity::fromDto))
         } catch (e: Exception) {
             throw e
+        }
+    }
+
+    override fun getNewer(id: Long): Flow<Int> = flow {
+        while (true) {
+            delay(10_000)
+            try {
+                val newPosts = PostApi.service.getNewer(id)
+                mutex.withLock {
+                    cachedNewPosts = newPosts
+                }
+                emit(newPosts.size)
+                println("DEBUG: Found and cached ${newPosts.size} new posts")
+            } catch (_: Exception) {
+                emit(0)
+            }
+        }
+    }.catch { _ ->
+        emit(0)
+    }
+
+    override suspend fun addNewer() {
+        mutex.withLock {
+            if (cachedNewPosts.isNotEmpty()) {
+                dao.insert(cachedNewPosts.map(PostEntity::fromDto))
+                cachedNewPosts = emptyList()
+            } else {
+                val posts = PostApi.service.getAll()
+                dao.insert(posts.map(PostEntity::fromDto))
+            }
         }
     }
 
