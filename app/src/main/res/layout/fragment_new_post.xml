@@ -13,8 +13,11 @@
         android:layout_height="wrap_content">
 
         <LinearLayout
+            android:id="@+id/new_post_lo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible"
             android:paddingBottom="?actionBarSize"
             android:orientation="vertical">
 
@@ -24,6 +27,7 @@
                 android:layout_height="match_parent"
                 android:background="@android:color/transparent"
                 android:gravity="top"
+                android:visibility="visible"
                 android:hint="@string/post_text"
                 android:importantForAutofill="no"
                 android:inputType="textMultiLine"
@@ -37,19 +41,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-            <ImageView
-                android:id="@+id/preview"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:adjustViewBounds="true"
-                tools:srcCompat="@tools:sample/backgrounds/scenic" />
+                <ImageView
+                    android:id="@+id/preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:adjustViewBounds="true"
+                    tools:srcCompat="@tools:sample/backgrounds/scenic" />
 
-            <Button
+                <Button
                 android:id="@+id/removePhoto"
                 android:backgroundTint="@color/confirm_button_color"
                 android:textColor="@color/black"
-                android:layout_width="wrap_content"
                 android:visibility="gone"
+                tools:visibility="visible"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal|bottom"
                 android:text="@string/menu_remove" />

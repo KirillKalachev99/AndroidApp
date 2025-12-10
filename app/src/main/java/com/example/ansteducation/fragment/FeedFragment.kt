@@ -6,8 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.example.ansteducation.R
 import com.example.ansteducation.adapter.OnInteractionListener
 import com.example.ansteducation.adapter.PostAdapter

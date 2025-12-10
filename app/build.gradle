@@ -51,6 +51,7 @@ android {
 }
 
 dependencies {
+    implementation libs.play.services.cast.framework
     def play_services_base_version = "18.5.0"
 
     implementation libs.androidx.core.ktx
