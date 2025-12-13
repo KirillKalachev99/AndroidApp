@@ -60,6 +60,16 @@ class SinglePostFragment: Fragment() {
                     viewModel.retryPost(post)
                 }
 
+                override fun onImageClick(post: Post, imageUrl: String) {
+                    val bundle = Bundle().apply {
+                        putString("imageUrl", imageUrl)
+                    }
+                    findNavController().navigate(
+                        R.id.action_feedFragment_to_fullscreenImageFragment,
+                        bundle
+                    )
+                }
+
             }, null)
 
         val post = viewModel.data.value?.posts?.find { it.id == postId }
