@@ -1,6 +1,7 @@
 package com.example.ansteducation.viewModel
 
 import android.app.Application
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -13,6 +14,7 @@ import com.example.ansteducation.db.AppDb
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.model.FeedModel
 import com.example.ansteducation.model.FeedModelState
+import com.example.ansteducation.model.PhotoModel
 import com.example.ansteducation.repository.PostRepository
 import com.example.ansteducation.repository.PostRepositoryImpl
 import com.example.ansteducation.util.SingleLiveEvent
@@ -21,6 +23,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.io.File
 
 private val empty = Post(
     id = 0,
@@ -57,8 +60,9 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             MutableLiveData(0).apply { value = 0 }
         }
     }
-
-
+    private val _photo = MutableLiveData<PhotoModel?>(null)
+    val photo: LiveData<PhotoModel?>
+        get() = _photo
 
 
     init {
@@ -122,11 +126,11 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                         sharedByMe = false,
                         viewedByMe = false
                     )
-                    repository.saveAsync(newPost, update = false)
+                    repository.saveAsync(newPost, update = false, image = _photo.value?.file)
 
                 } else {
                     val updatedPost = currentEdited.copy(content = content)
-                    repository.saveAsync(updatedPost, update = true)
+                    repository.saveAsync(updatedPost, update = true, image = _photo.value?.file)
                 }
 
                 edited.value = empty
@@ -184,6 +188,14 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clear() {
         edited.value = empty
+    }
+
+    fun changePhoto(uri: Uri, file: File) {
+        _photo.value = PhotoModel(uri, file)
+    }
+
+    fun removePhoto() {
+        _photo.value = null
     }
 
 }

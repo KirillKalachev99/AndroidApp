@@ -1,5 +1,6 @@
 package com.example.ansteducation.fragment
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -23,6 +24,7 @@ import com.google.android.material.snackbar.Snackbar
 import java.util.Locale
 
 class FeedFragment : Fragment() {
+    @SuppressLint("SetTextI18n")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -70,7 +72,18 @@ class FeedFragment : Fragment() {
             override fun retryPost(post: Post) {
                 viewModel.retryPost(post)
             }
-        }) {
+
+            override fun onImageClick(post: Post, imageUrl: String) {
+                val bundle = Bundle().apply {
+                    putString("imageUrl", imageUrl)
+                }
+                findNavController().navigate(
+                    R.id.action_feedFragment_to_fullscreenImageFragment,
+                    bundle
+                )
+            }
+        })
+        {
             //  viewModel.view(it.id)
         }
 

@@ -1,6 +1,7 @@
 package com.example.ansteducation.adapter
 
 import android.annotation.SuppressLint
+import android.graphics.drawable.Drawable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -11,10 +12,13 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
 import com.example.ansteducation.CountFormat
 import com.example.ansteducation.R
 import com.example.ansteducation.databinding.CardPostBinding
 import com.example.ansteducation.dto.Post
+import javax.sql.DataSource
 
 
 interface OnInteractionListener {
@@ -25,6 +29,7 @@ interface OnInteractionListener {
     fun playVideo(url: String)
     fun onPostClick(post: Post) {}
     fun retryPost(post: Post)
+    fun onImageClick(post: Post, imageUrl: String)
 }
 
 typealias onItemViewListener = (post: Post) -> Unit
@@ -33,7 +38,7 @@ class PostAdapter(
     private val onInteractionListener: OnInteractionListener,
     private val onItemViewListener: onItemViewListener? = null,
 ) :
-    ListAdapter<Post, PostViewHolder>(PostDiffCallback) {
+    ListAdapter<Post, PostViewHolder>(PostViewHolder.PostDiffCallback) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
         val binding = CardPostBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -44,7 +49,6 @@ class PostAdapter(
         val post = getItem(position)
         Log.d("ADAPTER_DEBUG", "Position: $position, ID: ${post.id}, Failed: ${post.id < 0}")
         holder.bind(post)
-        holder.viewed(post)
     }
 }
 
@@ -57,7 +61,7 @@ class PostViewHolder(
     @SuppressLint("UseKtx")
     fun bind(post: Post) {
         val endpointImg = "http://10.0.2.2:9999/avatars/"
-        val endpointAttach = "http://10.0.2.2:9999/images/"
+        val endpointAttach = "http://10.0.2.2:9999/media/"
         val isNormalPost = post.id > 0 && post.id < 1_000_000_000_000L
         val isSending = post.id > 1_000_000_000_000L
         val isFailed = post.id < 0
@@ -105,48 +109,62 @@ class PostViewHolder(
                     }
                 }.show()
             }
-            if (post.attachment?.url?.isNotEmpty() == true) {
-                attachment.visibility = View.VISIBLE
-                Glide.with(root)
-                    .load(endpointAttach + post.attachment.url)
-                    .timeout(10_000)
-                    .into(attachment)
-            } else {
-                attachment.visibility = View.GONE
-                Glide.with(root).clear(attachment)
-            }
-            root.setOnClickListener {
-                onInteractionListener.onPostClick(post)
-            }
-            refreshBotton.setOnClickListener {
-                if (isFailed) {
-                    onInteractionListener.retryPost(post)
+            val attachmentUrl = post.attachment?.url
+            if (!attachmentUrl.isNullOrEmpty()) {
+                Log.d("POST_ADAPTER", "Attachment found: $attachmentUrl")
+                Log.d("POST_ADAPTER", "Full URL: $endpointAttach$attachmentUrl")
+
+                if (attachmentUrl.isNotEmpty()) {
+                    val imageUrl = endpointAttach + post.attachment.url
+                    attachment.visibility = View.VISIBLE
+
+                    Glide.with(root)
+                        .load(imageUrl)
+                        .timeout(10_000)
+                        .into(attachment)
+
+                    attachment.setOnClickListener {
+                        onInteractionListener.onImageClick(post, imageUrl)
+                    }
+                } else {
+                    attachment.visibility = View.GONE
+                    Glide.with(root).clear(attachment)
+                }
+
+
+                root.setOnClickListener {
+                    onInteractionListener.onPostClick(post)
+                }
+                refreshBotton.setOnClickListener {
+                    if (isFailed) {
+                        onInteractionListener.retryPost(post)
+                    }
+                }
+                like.setOnClickListener {
+                    onInteractionListener.like(post)
+                }
+                share.setOnClickListener {
+                    onInteractionListener.share(post)
                 }
             }
-            like.setOnClickListener {
-                onInteractionListener.like(post)
-            }
-            share.setOnClickListener {
-                onInteractionListener.share(post)
+        }
+
+        fun viewed(post: Post) {
+            if (!post.viewedByMe) {
+                itemView.post {
+                    onItemViewListener?.invoke(post)
+                }
             }
         }
     }
 
-    fun viewed(post: Post) {
-        if (!post.viewedByMe) {
-            itemView.post {
-                onItemViewListener?.invoke(post)
-            }
+    object PostDiffCallback : DiffUtil.ItemCallback<Post>() {
+        override fun areItemsTheSame(oldItem: Post, newItem: Post): Boolean {
+            return oldItem.id == newItem.id
         }
-    }
-}
 
-object PostDiffCallback : DiffUtil.ItemCallback<Post>() {
-    override fun areItemsTheSame(oldItem: Post, newItem: Post): Boolean {
-        return oldItem.id == newItem.id
-    }
-
-    override fun areContentsTheSame(oldItem: Post, newItem: Post): Boolean {
-        return oldItem == newItem && oldItem.attachment == newItem.attachment
+        override fun areContentsTheSame(oldItem: Post, newItem: Post): Boolean {
+            return oldItem == newItem && oldItem.attachment == newItem.attachment
+        }
     }
 }

@@ -71,6 +71,8 @@ dependencies {
     implementation libs.retrofit
     implementation libs.retrofit2.converter.gson
     implementation libs.okhttp
+    implementation libs.imagepicker
+    implementation("com.github.yalantis:ucrop:2.2.11")
     implementation("com.squareup.okhttp3:logging-interceptor:5.2.1")
     implementation libs.gson.v2132
     implementation libs.glide

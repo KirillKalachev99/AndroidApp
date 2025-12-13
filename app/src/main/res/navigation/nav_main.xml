@@ -17,6 +17,7 @@
             android:id="@+id/action_feedFragment_to_singlePostFragment"
             app:destination="@id/singlePostFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/newPostFragment"
         android:name="com.example.ansteducation.fragment.NewPostFragment"
@@ -33,4 +34,21 @@
             android:id="@+id/action_singlePostFragment_to_feedFragment"
             app:destination="@id/feedFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/feedFragment"
+        android:name="com.example.ansteducation.fragment.FeedFragment"
+        android:label="FeedFragment"
+        tools:layout="@layout/fragment_feed">
+
+        <action
+            android:id="@+id/action_feedFragment_to_fullscreenImageFragment"
+            app:destination="@id/fullscreenImageFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/fullscreenImageFragment"
+        android:name="com.example.ansteducation.fragment.FullscreenImageFragment"
+        android:label="FullscreenImageFragment"
+        tools:layout="@layout/fragment_fullscreen_image" />
 </navigation>

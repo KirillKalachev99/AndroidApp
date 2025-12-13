@@ -2,6 +2,9 @@ package com.example.ansteducation.repository
 
 import com.example.ansteducation.api.PostApi
 import com.example.ansteducation.dao.PostDao
+import com.example.ansteducation.dto.Attachment
+import com.example.ansteducation.dto.AttachmentType
+import com.example.ansteducation.dto.Media
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.entity.PostEntity
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -14,6 +17,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
 import kotlin.collections.map
 
 class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
@@ -101,7 +107,7 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    override suspend fun saveAsync(post: Post, update: Boolean): Post {
+    override suspend fun saveAsync(post: Post, update: Boolean, image: File?): Post {
         val localId = System.currentTimeMillis()
         val localPost = post.copy(id = localId)
 
@@ -111,7 +117,18 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
             supervisorScope {
                 launch {
                     try {
-                        val serverPost = PostApi.service.save(post.copy(id = 0))
+                        val media = image?.let { upload(it) }
+                        val postWithAttachment = media?.let {
+                            post.copy(
+                                attachment = Attachment(
+                                    it.id,
+                                    AttachmentType.IMAGE
+                                ),
+                                id = 0
+                            )
+                        } ?: post.copy(id = 0)
+
+                        val serverPost = PostApi.service.save(postWithAttachment)
 
                         updatePost(localId, serverPost)
 
@@ -124,6 +141,16 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
         }
         return localPost
     }
+
+    private suspend fun upload(file: File): Media =
+        PostApi.service.upload(
+            MultipartBody.Part.createFormData(
+                "file",
+                file.name,
+                file.asRequestBody()
+            )
+        )
+
 
     override suspend fun hasData(): Boolean {
         return try {
@@ -138,6 +165,7 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
         dao.removeById(oldId)
         dao.insert(PostEntity.fromDto(newPost))
     }
+
 
     //    override suspend fun getImgNames(): List<String> {
 //        val posts = getAsync()

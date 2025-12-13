@@ -1,7 +1,9 @@
 package com.example.ansteducation.entity
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.example.ansteducation.dto.Attachment
 import com.example.ansteducation.dto.Post
 
 @Entity
@@ -19,7 +21,9 @@ data class PostEntity(
     val likedByMe: Boolean = false,
     var viewedByMe: Boolean = false,
     var video: String? = null,
-    val syncStatus: String = "SYNCED"
+    val syncStatus: String = "SYNCED",
+    @Embedded
+    val attachment: Attachment? = null,
 ) {
     fun toDto(): Post = Post(
         id = id,
@@ -33,7 +37,8 @@ data class PostEntity(
         sharedByMe = sharedByMe,
         likedByMe = likedByMe,
         viewedByMe = viewedByMe,
-        video = video
+        video = video,
+        attachment = attachment
     )
 
     companion object {
@@ -51,7 +56,8 @@ data class PostEntity(
                 likedByMe = likedByMe,
                 viewedByMe = viewedByMe,
                 video = video,
-                syncStatus = "SYNCED"
+                syncStatus = "SYNCED",
+                attachment = attachment
             )
         }
     }
@@ -69,5 +75,6 @@ fun Post.toEntity(): PostEntity = PostEntity(
     sharedByMe = sharedByMe,
     likedByMe = likedByMe,
     viewedByMe = viewedByMe,
-    video = video
+    video = video,
+    attachment = attachment
 )

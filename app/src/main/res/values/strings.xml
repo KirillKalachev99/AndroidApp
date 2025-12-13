@@ -22,4 +22,6 @@
     <string name="no_response_like">Server is not responding. Please, try again</string>
     <string name="no_response_send_post">Couldn\'t send post to server. Please, try again</string>
     <string name="newer_posts">Show newer posts: </string>
+    <string name="failed_photo">Failed to pick photo</string>
+
 </resources>
