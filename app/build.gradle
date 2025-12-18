@@ -52,6 +52,7 @@ android {
 
 dependencies {
     implementation libs.play.services.cast.framework
+    implementation libs.firebase.crashlytics.buildtools
     def play_services_base_version = "18.5.0"
 
     implementation libs.androidx.core.ktx

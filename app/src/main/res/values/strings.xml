@@ -23,5 +23,13 @@
     <string name="no_response_send_post">Couldn\'t send post to server. Please, try again</string>
     <string name="newer_posts">Show newer posts: </string>
     <string name="failed_photo">Failed to pick photo</string>
+    <string name="logout">Logout</string>
+    <string name="sign_in">Sign in</string>
+    <string name="sign_up">Sign up</string>
+    <string name="enter_your_login">Enter your login</string>
+    <string name="enter_your_password">Enter your password</string>
+    <string name="authorization">Authorization</string>
+    <string name="log_in">Log in</string>
+    <string name="loading">Loading...</string>
 
 </resources>

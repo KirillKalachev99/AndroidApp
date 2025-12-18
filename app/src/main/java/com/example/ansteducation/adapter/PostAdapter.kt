@@ -89,6 +89,8 @@ class PostViewHolder(
             share.text = CountFormat.format(post.shares)
             seen.text = CountFormat.format(post.views)
             like.isChecked = post.likedByMe
+
+            menu.isVisible = post.ownedByMe
             menu.setOnClickListener {
                 PopupMenu(it.context, it).apply {
                     inflate(R.menu.menu_post)

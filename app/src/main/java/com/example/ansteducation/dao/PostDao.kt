@@ -29,14 +29,12 @@ interface PostDao {
         updateContentById(post.id, post.content)
     }
 
-    @Query(
-        """
-           UPDATE PostEntity SET
-               likes = likes + CASE WHEN likedByMe THEN -1 ELSE 1 END,
-               likedByMe = CASE WHEN likedByMe THEN 0 ELSE 1 END
-           WHERE id = :id;
-        """
-    )
+    @Query("""
+        UPDATE PostEntity SET 
+            likedByMe = CASE WHEN likedByMe = 1 THEN 0 ELSE 1 END,
+            likes = CASE WHEN likedByMe = 1 THEN likes - 1 ELSE likes + 1 END
+        WHERE id = :id
+    """)
     suspend fun likeById(id: Long)
 
     @Query(

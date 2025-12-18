@@ -4,6 +4,7 @@ data class Post(
     val id: Long,
     val author: String,
     val authorAvatar: String? = "",
+    val authorId: Long,
     val published: String,
     val content: String,
     val likes: Int = 0,
@@ -14,4 +15,5 @@ data class Post(
     var viewedByMe: Boolean = false,
     var video: String? = null,
     val attachment: Attachment? = null,
+    val ownedByMe: Boolean = false,
 )

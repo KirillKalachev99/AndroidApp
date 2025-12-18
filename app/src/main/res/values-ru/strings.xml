@@ -24,4 +24,12 @@
     <string name="no_response_send_post">Не удалось отправить пост на сервер. Попробуйте снова</string>
     <string name="newer_posts">Свежих постов: </string>
     <string name="failed_photo">Не удалось загрузить фото</string>
+    <string name="logout">Выйти</string>
+    <string name="sign_in">Войти</string>
+    <string name="sign_up">Зарегистрироваться</string>
+    <string name="enter_your_login">Введите логин</string>
+    <string name="enter_your_password">Введите пароль</string>
+    <string name="authorization">Авторизация</string>
+    <string name="log_in">Войти</string>
+    <string name="loading">Загрузка...</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.example.ansteducation.repository
 
 import com.example.ansteducation.api.PostApi
+import com.example.ansteducation.auth.AppAuth
 import com.example.ansteducation.dao.PostDao
 import com.example.ansteducation.dto.Attachment
 import com.example.ansteducation.dto.AttachmentType

@@ -10,6 +10,7 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import com.example.ansteducation.api.PostApi
+import com.example.ansteducation.auth.AppAuth
 import com.example.ansteducation.db.AppDb
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.model.FeedModel
@@ -19,8 +20,10 @@ import com.example.ansteducation.repository.PostRepository
 import com.example.ansteducation.repository.PostRepositoryImpl
 import com.example.ansteducation.util.SingleLiveEvent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.File
@@ -28,6 +31,7 @@ import java.io.File
 private val empty = Post(
     id = 0,
     author = "",
+    authorId = 0,
     content = "",
     published = ""
 )
@@ -37,8 +41,16 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: PostRepository = PostRepositoryImpl(
         AppDb.getInstance(application).postDao()
     )
-    val data: LiveData<FeedModel> = repository.data.map { FeedModel(it, it.isEmpty()) }
-        .catch { it.printStackTrace() }
+
+    val data: LiveData<FeedModel> = AppAuth.getInstance().authState.flatMapLatest { token ->
+        repository.data
+            .map { posts ->
+                FeedModel(posts.map { post ->
+                    post.copy(ownedByMe = post.authorId == token?.id)
+                }, posts.isEmpty())
+            }
+            .catch { emit(FeedModel(emptyList(), true)) }
+    }
         .asLiveData(Dispatchers.Default)
 
     private val _state = MutableLiveData(FeedModelState())
@@ -117,6 +129,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                     val newPost = Post(
                         id = 0,
                         author = "Me",
+                        authorId = 0,
                         content = content,
                         published = "",
                         likes = 0,

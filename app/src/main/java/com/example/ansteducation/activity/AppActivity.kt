@@ -4,17 +4,27 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.MenuProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.navigation.findNavController
 import com.example.ansteducation.R
+import com.example.ansteducation.auth.AppAuth
 import com.example.ansteducation.databinding.ActivityAppBinding
+import com.example.ansteducation.dto.Token
 import com.example.ansteducation.util.StringArg
+import com.example.ansteducation.viewModel.AuthViewModel
 import com.google.android.material.snackbar.Snackbar
 
 class AppActivity : AppCompatActivity() {
+
+    private val authViewModel: AuthViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,7 +62,40 @@ class AppActivity : AppCompatActivity() {
             )
         }
 
+        addMenuProvider(
+            object : MenuProvider {
+                override fun onCreateMenu(
+                    menu: Menu,
+                    menuInflater: MenuInflater
+                ) {
+                    menuInflater.inflate(R.menu.menu_auth, menu)
+                    authViewModel.data.observe(this@AppActivity) {
+                        val authorized = authViewModel.isAuthorized
+                        menu.setGroupVisible(R.id.authorized, authorized)
+                        menu.setGroupVisible(R.id.unAuthorized, !authorized)
+                    }
+                }
+
+                override fun onMenuItemSelected(menuItem: MenuItem): Boolean =
+                    when (menuItem.itemId) {
+                        R.id.signIn, R.id.signUp -> {
+                            findNavController(R.id.nav_host_fragment).navigate(R.id.action_feedFragment_to_authFragment)
+                            //AppAuth.getInstance().setAuth(Token(5, "x-token"))
+                            true
+                        }
+
+                        R.id.logout -> {
+                            //TODO remove hardcode
+                            AppAuth.getInstance().clear()
+                            true
+                        }
+
+                        else -> false
+                    }
+            }
+        )
     }
+
 
     companion object {
         var Bundle.textArg: String? by StringArg

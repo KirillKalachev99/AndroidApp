@@ -19,6 +19,9 @@
         <action
             android:id="@+id/action_feedFragment_to_fullscreenImageFragment"
             app:destination="@id/fullscreenImageFragment" />
+        <action
+            android:id="@+id/action_feedFragment_to_authFragment"
+            app:destination="@id/authFragment" />
     </fragment>
 
     <fragment
@@ -26,6 +29,13 @@
         android:name="com.example.ansteducation.fragment.NewPostFragment"
         android:label="fragment_new_post"
         tools:layout="@layout/fragment_new_post" />
+
+    <fragment
+        android:id="@+id/authFragment"
+        android:name="com.example.ansteducation.fragment.AuthFragment"
+        android:label="auth_fragment"
+        tools:layout="@layout/auth_fragment" />
+
     <fragment
         android:id="@+id/singlePostFragment"
         android:name="com.example.ansteducation.fragment.SinglePostFragment"
@@ -37,8 +47,11 @@
             android:id="@+id/action_singlePostFragment_to_feedFragment"
             app:destination="@id/feedFragment" />
         <action
-            android:id="@+id/action_feedFragment_to_fullscreenImageFragment"
+            android:id="@+id/action_singlePostFragment_to_fullscreenImageFragment"
             app:destination="@id/fullscreenImageFragment" />
+        <action
+            android:id="@+id/action_singlePostFragment_to_authFragment"
+            app:destination="@id/authFragment" />
     </fragment>
 
     <fragment
