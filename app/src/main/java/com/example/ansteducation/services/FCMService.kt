@@ -12,12 +12,14 @@ import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
 import androidx.core.app.NotificationManagerCompat
 import com.example.ansteducation.activity.AppActivity
+import com.example.ansteducation.auth.AppAuth
+import com.example.ansteducation.dto.PushBody
+import kotlin.jvm.java
 import kotlin.random.Random
 
 class FCMService : FirebaseMessagingService() {
@@ -36,7 +38,7 @@ class FCMService : FirebaseMessagingService() {
             val channel = NotificationChannel(channelId, name, importance).apply {
                 description = descriptionText
             }
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)
         }
     }
@@ -44,16 +46,26 @@ class FCMService : FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
         Log.i("fcm msg", message.data.toString())
         val actionFromData = message.data[action]
+        val appAuthUserId = AppAuth.getInstance().authState.value?.id
 
-        if (!isActionInEnum(actionFromData.toString())) {
-            return
+        message.data[content]?.let { content ->
+            val pushBody = gson.fromJson(content, PushBody::class.java)
+            Log.i("fcm msg", pushBody.toString())
+            when (pushBody.recipientId) {
+                appAuthUserId -> handlePushFromServer(pushBody)
+                null -> handlePushFromServer(pushBody)
+                0L -> AppAuth.getInstance().sendPushToken()
+                else -> AppAuth.getInstance().sendPushToken()
+            }
         }
 
         message.data[action]?.let { action ->
+            Log.i("fcm msg", actionFromData.toString())
             when (Action.valueOf(action)) {
                 Action.LIKE -> handleLike(
                     gson.fromJson(message.data[content], Like::class.java)
                 )
+
                 Action.POST -> handlePost(
                     gson.fromJson(message.data[content], NewPost::class.java)
                 )
@@ -80,17 +92,27 @@ class FCMService : FirebaseMessagingService() {
         notify(notification)
     }
 
+    private fun handlePushFromServer(pushBody: PushBody) {
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentText(pushBody.content)
+            .build()
+        notify(notification)
+    }
+
     private fun handlePost(post: NewPost) {
 
         val intent = Intent(this, AppActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
 
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+        val pendingIntent: PendingIntent =
+            PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
 
         val fullText = post.postText
         val shortText = if (fullText.length > 100) {
-            fullText.substring(0, 100) + "…"
+            fullText.take(100) + "…"
         } else {
             fullText
         }
@@ -133,11 +155,11 @@ class FCMService : FirebaseMessagingService() {
     }
 
     override fun onNewToken(token: String) {
-        Log.i("fcm token", token)
+        AppAuth.getInstance().sendPushToken(token)
     }
 
     enum class Action {
-        LIKE, POST
+        LIKE, POST,
     }
 
     data class Like(

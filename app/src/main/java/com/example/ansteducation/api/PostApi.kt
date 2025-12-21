@@ -4,6 +4,7 @@ import com.example.ansteducation.BuildConfig
 import com.example.ansteducation.auth.AppAuth
 import com.example.ansteducation.dto.Media
 import com.example.ansteducation.dto.Post
+import com.example.ansteducation.dto.PushToken
 import com.example.ansteducation.dto.Token
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -131,6 +132,9 @@ interface PostApi {
     @Multipart
     @POST("media")
     suspend fun upload(@Part file: MultipartBody.Part): Media
+
+    @POST("users/push-tokens")
+    suspend fun sendPushToken(@Body token: PushToken)
 
     companion object {
         val service: PostApi by lazy {

@@ -2,9 +2,16 @@ package com.example.ansteducation.auth
 
 import android.content.Context
 import androidx.core.content.edit
+import com.example.ansteducation.api.PostApi
+import com.example.ansteducation.dto.PushToken
 import com.example.ansteducation.dto.Token
+import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlin.coroutines.EmptyCoroutineContext
 
 
 class AppAuth private constructor(context: Context) {
@@ -21,6 +28,8 @@ class AppAuth private constructor(context: Context) {
         } else {
             _authState.value = Token(id, token)
         }
+
+        sendPushToken()
     }
 
 
@@ -30,6 +39,20 @@ class AppAuth private constructor(context: Context) {
         prefs.edit {
             putLong(ID_KEY, token.id)
             putString(TOKEN_KEY, token.token)
+        }
+        sendPushToken()
+    }
+
+    fun sendPushToken(token: String? = null) {
+        CoroutineScope(EmptyCoroutineContext).launch {
+            runCatching {
+                PostApi.service.sendPushToken(
+                    PushToken(
+                        token ?: FirebaseMessaging.getInstance().token.await()
+                    )
+                )
+            }
+                .onFailure { it.printStackTrace() }
         }
     }
 
