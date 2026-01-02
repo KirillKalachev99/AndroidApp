@@ -16,14 +16,16 @@ import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
-import com.example.ansteducation.activity.AppActivity
 import com.example.ansteducation.databinding.FragmentFeedBinding
 import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
 import java.util.Locale
 
+@AndroidEntryPoint
 class FeedFragment : Fragment() {
+
     @SuppressLint("SetTextI18n")
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,9 +38,8 @@ class FeedFragment : Fragment() {
         val language = currentLocale.language
 
 
-        val viewModel: PostViewModel by viewModels(
-            ownerProducer = ::requireParentFragment
-        )
+        val viewModel: PostViewModel by activityViewModels()
+
 
         val adapter = PostAdapter(object : OnInteractionListener {
             override fun like(post: Post) {
@@ -69,6 +70,7 @@ class FeedFragment : Fragment() {
                     bundleOf("postId" to post.id)
                 )
             }
+
             override fun retryPost(post: Post) {
                 viewModel.retryPost(post)
             }
@@ -160,7 +162,6 @@ class FeedFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        (activity as? AppActivity)?.showActionBar(true)
         (activity as? AppCompatActivity)?.supportActionBar?.title = getString(R.string.your_feed)
     }
 }

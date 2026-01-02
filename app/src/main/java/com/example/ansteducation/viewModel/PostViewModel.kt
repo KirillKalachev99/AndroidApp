@@ -1,24 +1,22 @@
 package com.example.ansteducation.viewModel
 
-import android.app.Application
 import android.net.Uri
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import com.example.ansteducation.api.PostApi
 import com.example.ansteducation.auth.AppAuth
-import com.example.ansteducation.db.AppDb
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.model.FeedModel
 import com.example.ansteducation.model.FeedModelState
 import com.example.ansteducation.model.PhotoModel
 import com.example.ansteducation.repository.PostRepository
-import com.example.ansteducation.repository.PostRepositoryImpl
 import com.example.ansteducation.util.SingleLiveEvent
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -27,6 +25,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.File
+import javax.inject.Inject
 
 private val empty = Post(
     id = 0,
@@ -36,13 +35,15 @@ private val empty = Post(
     published = ""
 )
 
-class PostViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class PostViewModel @Inject constructor(
+    private val repository: PostRepository,
+    private val appAuth: AppAuth,
+    private val postApi: PostApi
+) : ViewModel() {
 
-    private val repository: PostRepository = PostRepositoryImpl(
-        AppDb.getInstance(application).postDao()
-    )
-
-    val data: LiveData<FeedModel> = AppAuth.getInstance().authState.flatMapLatest { token ->
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val data: LiveData<FeedModel> = appAuth.authState.flatMapLatest { token ->
         repository.data
             .map { posts ->
                 FeedModel(posts.map { post ->
@@ -75,7 +76,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     private val _photo = MutableLiveData<PhotoModel?>(null)
     val photo: LiveData<PhotoModel?>
         get() = _photo
-
 
     init {
         load()
@@ -140,7 +140,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                         viewedByMe = false
                     )
                     repository.saveAsync(newPost, update = false, image = _photo.value?.file)
-
                 } else {
                     val updatedPost = currentEdited.copy(content = content)
                     repository.saveAsync(updatedPost, update = true, image = _photo.value?.file)
@@ -148,7 +147,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
                 edited.value = empty
                 _postCreated.value = Unit
-
             } catch (e: Exception) {
                 Log.e("PostViewModel", "Save error: ${e.message}")
             } finally {
@@ -162,12 +160,8 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val sendingId = System.currentTimeMillis()
                 val sendingPost = post.copy(id = sendingId)
-                (repository as PostRepositoryImpl).updatePost(post.id, sendingPost)
-
-                val serverPost = PostApi.service.save(post.copy(id = 0))
-
+                val serverPost = postApi.save(post.copy(id = 0))
                 repository.updatePost(sendingId, serverPost)
-
             } catch (e: Exception) {
                 Log.e("PostViewModel", "Retry failed: ${e.message}")
             }
@@ -210,5 +204,4 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     fun removePhoto() {
         _photo.value = null
     }
-
 }

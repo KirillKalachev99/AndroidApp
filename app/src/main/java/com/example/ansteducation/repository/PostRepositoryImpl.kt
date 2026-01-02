@@ -1,7 +1,6 @@
 package com.example.ansteducation.repository
 
 import com.example.ansteducation.api.PostApi
-import com.example.ansteducation.auth.AppAuth
 import com.example.ansteducation.dao.PostDao
 import com.example.ansteducation.dto.Attachment
 import com.example.ansteducation.dto.AttachmentType
@@ -21,16 +20,20 @@ import kotlinx.coroutines.sync.withLock
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
+import javax.inject.Inject
 import kotlin.collections.map
 
-class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
+class PostRepositoryImpl @Inject constructor(
+    private val dao: PostDao,
+    private val apiService: PostApi,
+) : PostRepository {
 
     private val mutex = Mutex()
     private var cachedNewPosts: List<Post> = emptyList()
 
     override suspend fun getAsync() {
         try {
-            val posts = PostApi.service.getAll()
+            val posts = apiService.getAll()
             dao.insert(posts.map(PostEntity::fromDto))
         } catch (e: Exception) {
             throw e
@@ -41,7 +44,7 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
         while (true) {
             delay(10_000)
             try {
-                val newPosts = PostApi.service.getNewer(id)
+                val newPosts = apiService.getNewer(id)
                 mutex.withLock {
                     cachedNewPosts = newPosts
                 }
@@ -61,7 +64,7 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
                 dao.insert(cachedNewPosts.map(PostEntity::fromDto))
                 cachedNewPosts = emptyList()
             } else {
-                val posts = PostApi.service.getAll()
+                val posts = apiService.getAll()
                 dao.insert(posts.map(PostEntity::fromDto))
             }
         }
@@ -82,9 +85,9 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
 
         try {
             val serverUpdatedPost = if (!alreadyLiked) {
-                PostApi.service.likeById(postId)
+                apiService.likeById(postId)
             } else {
-                PostApi.service.dislikeById(postId)
+                apiService.dislikeById(postId)
             }
             return serverUpdatedPost
 
@@ -101,7 +104,7 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
     override suspend fun removeByIdAsync(id: Long) {
         try {
             dao.removeById(id)
-            PostApi.service.deleteById(id)
+            apiService.deleteById(id)
         } catch (e: Exception) {
             throw e
         }
@@ -129,7 +132,7 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
                             )
                         } ?: post.copy(id = 0)
 
-                        val serverPost = PostApi.service.save(postWithAttachment)
+                        val serverPost = apiService.save(postWithAttachment)
 
                         updatePost(localId, serverPost)
 
@@ -144,7 +147,7 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
     }
 
     private suspend fun upload(file: File): Media =
-        PostApi.service.upload(
+        apiService.upload(
             MultipartBody.Part.createFormData(
                 "file",
                 file.name,

@@ -16,6 +16,7 @@ import androidx.core.view.MenuProvider
 import androidx.fragment.app.viewModels
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.ansteducation.activity.AppActivity
 import com.example.ansteducation.activity.AppActivity.Companion.textArg
@@ -23,12 +24,12 @@ import com.example.ansteducation.databinding.FragmentNewPostBinding
 import com.example.ansteducation.util.AndroidUtils
 import com.example.ansteducation.viewModel.PostViewModel
 import com.github.dhaval2404.imagepicker.ImagePicker
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class NewPostFragment : Fragment() {
 
-    private val viewModel: PostViewModel by viewModels(
-        ownerProducer = ::requireParentFragment
-    )
+    private val viewModel: PostViewModel by activityViewModels()
     private val maxSizePx = 2048
 
     override fun onCreateView(
@@ -118,7 +119,6 @@ class NewPostFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        (activity as? AppActivity)?.showActionBar(true)
         (activity as? AppCompatActivity)?.supportActionBar?.title = getString(R.string.new_post)
     }
 }

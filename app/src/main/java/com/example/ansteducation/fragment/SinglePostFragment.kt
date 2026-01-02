@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.ansteducation.R
 import com.example.ansteducation.adapter.OnInteractionListener
@@ -15,12 +15,12 @@ import com.example.ansteducation.adapter.PostViewHolder
 import com.example.ansteducation.databinding.FragmentSinglePostBinding
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.viewModel.PostViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class SinglePostFragment: Fragment() {
 
-    private val viewModel: PostViewModel by viewModels(
-        ownerProducer = ::requireParentFragment
-    )
+    private val viewModel: PostViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,

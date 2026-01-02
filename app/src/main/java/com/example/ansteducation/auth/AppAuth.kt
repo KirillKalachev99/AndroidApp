@@ -6,16 +6,29 @@ import com.example.ansteducation.api.PostApi
 import com.example.ansteducation.dto.PushToken
 import com.example.ansteducation.dto.Token
 import com.google.firebase.messaging.FirebaseMessaging
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlin.coroutines.EmptyCoroutineContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-
-class AppAuth private constructor(context: Context) {
+@Singleton
+class AppAuth @Inject constructor(
+    @ApplicationContext
+    private val context: Context,
+    private val firebaseMessaging: FirebaseMessaging
+) {
     private val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
+    private val ID_KEY = "id"
+    private val TOKEN_KEY = "token"
     private val _authState = MutableStateFlow<Token?>(null)
     val authState = _authState.asStateFlow()
 
@@ -24,14 +37,13 @@ class AppAuth private constructor(context: Context) {
         val token = prefs.getString(TOKEN_KEY, null)
 
         if (id == 0L || token == null) {
-            prefs.edit() { clear() }
+            prefs.edit { clear() }
         } else {
             _authState.value = Token(id, token)
         }
 
         sendPushToken()
     }
-
 
     @Synchronized
     fun setAuth(token: Token) {
@@ -43,12 +55,22 @@ class AppAuth private constructor(context: Context) {
         sendPushToken()
     }
 
+    @InstallIn(SingletonComponent::class)
+    @EntryPoint
+    interface AppAuthEntryPoint {
+        fun getPostApiService(): PostApi
+    }
+
     fun sendPushToken(token: String? = null) {
-        CoroutineScope(EmptyCoroutineContext).launch {
+        CoroutineScope(Dispatchers.Default).launch {
             runCatching {
-                PostApi.service.sendPushToken(
+                val entryPoint = EntryPointAccessors.fromApplication(
+                    context,
+                    AppAuthEntryPoint::class.java
+                ).getPostApiService()
+                entryPoint.sendPushToken(
                     PushToken(
-                        token ?: FirebaseMessaging.getInstance().token.await()
+                        token ?: firebaseMessaging.token.await()
                     )
                 )
             }
@@ -56,26 +78,9 @@ class AppAuth private constructor(context: Context) {
         }
     }
 
-
     @Synchronized
     fun clear() {
         _authState.value = null
         prefs.edit { clear() }
     }
-
-    companion object {
-        private const val TOKEN_KEY = "TOKEN_KEY"
-        private const val ID_KEY = "ID_KEY"
-
-        @Volatile
-        private var INSTANCE: AppAuth? = null
-
-        fun getInstance(): AppAuth = requireNotNull(INSTANCE) { "Should call initApp first!" }
-
-        fun initApp(context: Context) {
-            INSTANCE = AppAuth(context)
-        }
-    }
 }
-
-data class AuthState(val id: Long = 0, val token: String? = null)

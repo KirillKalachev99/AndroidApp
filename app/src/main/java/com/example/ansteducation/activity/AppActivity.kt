@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -17,12 +18,25 @@ import androidx.navigation.findNavController
 import com.example.ansteducation.R
 import com.example.ansteducation.auth.AppAuth
 import com.example.ansteducation.databinding.ActivityAppBinding
-import com.example.ansteducation.dto.Token
 import com.example.ansteducation.util.StringArg
 import com.example.ansteducation.viewModel.AuthViewModel
+import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.messaging.FirebaseMessaging
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class AppActivity : AppCompatActivity() {
+
+    @Inject
+    lateinit var appAuth: AppAuth
+
+    @Inject
+    lateinit var firebaseMessaging: FirebaseMessaging
+
+    @Inject
+    lateinit var googleApiAvailability: GoogleApiAvailability
 
     private val authViewModel: AuthViewModel by viewModels()
 
@@ -37,6 +51,19 @@ class AppActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        firebaseMessaging.token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                println("some stuff happened: ${task.exception}")
+                return@addOnCompleteListener
+            }
+
+            val token = task.result
+            println(token)
+        }
+
+        checkGoogleApiAvailability()
+
         supportActionBar
 
         intent?.let {
@@ -80,13 +107,11 @@ class AppActivity : AppCompatActivity() {
                     when (menuItem.itemId) {
                         R.id.signIn, R.id.signUp -> {
                             findNavController(R.id.nav_host_fragment).navigate(R.id.action_feedFragment_to_authFragment)
-                            //AppAuth.getInstance().setAuth(Token(5, "x-token"))
                             true
                         }
 
                         R.id.logout -> {
-                            //TODO remove hardcode
-                            AppAuth.getInstance().clear()
+                            appAuth.clear()
                             true
                         }
 
@@ -95,7 +120,6 @@ class AppActivity : AppCompatActivity() {
             }
         )
     }
-
 
     companion object {
         var Bundle.textArg: String? by StringArg
@@ -114,13 +138,17 @@ class AppActivity : AppCompatActivity() {
         requestPermissions(arrayOf(permission), 1)
     }
 
-    fun showActionBar(show: Boolean) {
-        supportActionBar?.let {
-            if (show) {
-                it.show()
-            } else {
-                it.hide()
-            }
+    private fun checkGoogleApiAvailability() {
+        val code = googleApiAvailability.isGooglePlayServicesAvailable(this@AppActivity)
+        if (code == com.google.android.gms.common.ConnectionResult.SUCCESS) {
+            return
         }
+        if (googleApiAvailability.isUserResolvableError(code)) {
+            googleApiAvailability.getErrorDialog(this@AppActivity, code, 9000)?.show()
+            return
+        }
+        Toast.makeText(this@AppActivity,
+            getString(R.string.google_play_unavailable), Toast.LENGTH_LONG)
+            .show()
     }
 }
