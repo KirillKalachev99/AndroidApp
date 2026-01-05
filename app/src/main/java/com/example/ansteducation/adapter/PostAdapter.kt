@@ -1,24 +1,20 @@
 package com.example.ansteducation.adapter
 
 import android.annotation.SuppressLint
-import android.graphics.drawable.Drawable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.isVisible
+import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.request.RequestListener
 import com.example.ansteducation.CountFormat
 import com.example.ansteducation.R
 import com.example.ansteducation.databinding.CardPostBinding
 import com.example.ansteducation.dto.Post
-import javax.sql.DataSource
 
 
 interface OnInteractionListener {
@@ -38,7 +34,7 @@ class PostAdapter(
     private val onInteractionListener: OnInteractionListener,
     private val onItemViewListener: onItemViewListener? = null,
 ) :
-    ListAdapter<Post, PostViewHolder>(PostViewHolder.PostDiffCallback) {
+    PagingDataAdapter<Post, PostViewHolder>(PostViewHolder.PostDiffCallback) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
         val binding = CardPostBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -46,8 +42,8 @@ class PostAdapter(
     }
 
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
-        val post = getItem(position)
-        Log.d("ADAPTER_DEBUG", "Position: $position, ID: ${post.id}, Failed: ${post.id < 0}")
+        val post = getItem(position) ?: return
+        post.id.let { Log.d("ADAPTER_DEBUG", "Position: $position, ID: ${post.id}, Failed: ${it < 0}") }
         holder.bind(post)
     }
 }

@@ -17,10 +17,14 @@ import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.paging.LoadState
 import com.example.ansteducation.databinding.FragmentFeedBinding
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 @AndroidEntryPoint
@@ -92,32 +96,51 @@ class FeedFragment : Fragment() {
         binding.list.adapter = adapter
 
         binding.swipeRefresh.setOnRefreshListener {
-            viewModel.load(forceRefresh = true)
-            binding.progress.isVisible = false
+            adapter.refresh()
         }
 
-        viewModel.data.observe(viewLifecycleOwner) { data ->
-            val previousSize = adapter.currentList.size
-            adapter.submitList(data.posts) {
-                if (data.posts.size > previousSize) {
-                    binding.list.scrollToPosition(0)
-                }
-            }
-            binding.apply {
-                empty.isVisible = data.empty
+        lifecycleScope.launchWhenCreated {
+            viewModel.data.collectLatest { pagingData ->
+                adapter.submitData(pagingData)
             }
         }
 
-        viewModel.newerCount.observe(viewLifecycleOwner) {
-            println(it)
-            binding.apply {
-                newerButton.isVisible = it > 0
-                when (language) {
-                    "ru" -> newerButton.text = getString(R.string.newer_posts) + " " + it.toString()
-                    else -> newerButton.text = "Show $it new posts"
-                }
+        lifecycleScope.launch {
+            viewModel.pagingDataFlow.collectLatest { pagingData ->
+                adapter.submitData(pagingData)
             }
         }
+
+        lifecycleScope.launchWhenCreated {
+            adapter.loadStateFlow.collectLatest {
+                binding.swipeRefresh.isRefreshing = it.refresh is LoadState.Loading
+                        || it.append is LoadState.Loading
+                        || it.prepend is LoadState.Loading
+            }
+        }
+
+//        viewModel.data.observe(viewLifecycleOwner) { data ->
+//            val previousSize = adapter.currentList.size
+//            adapter.submitList(data.posts) {
+//                if (data.posts.size > previousSize) {
+//                    binding.list.scrollToPosition(0)
+//                }
+//            }
+//            binding.apply {
+//                empty.isVisible = data.empty
+//            }
+//        }
+
+//        viewModel.newerCount.observe(viewLifecycleOwner) {
+//            println(it)
+//            binding.apply {
+//                newerButton.isVisible = it > 0
+//                when (language) {
+//                    "ru" -> newerButton.text = getString(R.string.newer_posts) + " " + it.toString()
+//                    else -> newerButton.text = "Show $it new posts"
+//                }
+//            }
+//        }
 
         viewModel.state.observe(viewLifecycleOwner) { state ->
             binding.apply {

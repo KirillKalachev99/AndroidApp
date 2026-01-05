@@ -72,10 +72,10 @@ class SinglePostFragment: Fragment() {
 
             }, null)
 
-        val post = viewModel.data.value?.posts?.find { it.id == postId }
-        post?.let {
-            postVh.bind(it)
-        }
+//        val post = viewModel.data.value?.posts?.find { it.id == postId }
+//        post?.let {
+//            postVh.bind(it)
+//        }
 
         return binding.root
     }

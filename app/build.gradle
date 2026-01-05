@@ -8,16 +8,16 @@ plugins {
 
 android {
     namespace 'com.example.ansteducation'
-    compileSdk 35
+    compileSdk 36
 
     packaging {
         resources.excludes.add("META-INF/versions/9/OSGI-INF/MANIFEST.MF")
     }
 
     defaultConfig {
-        applicationId "ru.netology.nmedia"  // У вас два разных названия - выберите одно
+        applicationId "ru.netology.nmedia"
         minSdk 24
-        targetSdk 35
+        targetSdk 36
         versionCode 1
         versionName "1.0"
 
@@ -56,6 +56,9 @@ dependencies {
     // Hilt
     implementation libs.hilt.android
     kapt libs.hilt.compiler
+
+    //Paging 3
+    implementation "androidx.paging:paging-runtime:3.3.6"
 
     // AndroidX
     implementation libs.androidx.core.ktx

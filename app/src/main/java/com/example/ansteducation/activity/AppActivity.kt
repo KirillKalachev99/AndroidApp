@@ -111,7 +111,7 @@ class AppActivity : AppCompatActivity() {
                         }
 
                         R.id.logout -> {
-                            appAuth.clear()
+                            authViewModel.clearAuth()
                             true
                         }
 

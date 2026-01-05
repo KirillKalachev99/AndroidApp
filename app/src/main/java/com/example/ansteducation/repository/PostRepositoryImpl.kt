@@ -1,6 +1,10 @@
 package com.example.ansteducation.repository
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import com.example.ansteducation.api.PostApi
+import com.example.ansteducation.auth.AppAuth
 import com.example.ansteducation.dao.PostDao
 import com.example.ansteducation.dto.Attachment
 import com.example.ansteducation.dto.AttachmentType
@@ -8,9 +12,11 @@ import com.example.ansteducation.dto.Media
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.entity.PostEntity
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -21,15 +27,31 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import javax.inject.Inject
-import kotlin.collections.map
+import javax.inject.Singleton
 
+@Singleton
 class PostRepositoryImpl @Inject constructor(
     private val dao: PostDao,
     private val apiService: PostApi,
+    private val appAuth: AppAuth,
 ) : PostRepository {
 
     private val mutex = Mutex()
     private var cachedNewPosts: List<Post> = emptyList()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override val data: Flow<PagingData<Post>> = appAuth.authState.flatMapLatest { token ->
+        Pager(
+            config = PagingConfig(
+                pageSize = 10,
+                enablePlaceholders = false,
+                initialLoadSize = 20
+            ),
+            pagingSourceFactory = {
+                PostPagingSource(apiService)
+            }
+        ).flow
+    }
 
     override suspend fun getAsync() {
         try {
@@ -69,8 +91,6 @@ class PostRepositoryImpl @Inject constructor(
             }
         }
     }
-
-    override val data = dao.getAll().map { it.map { it.toDto() } }
 
     override suspend fun likeByIdAsync(post: Post): Post {
         val postId = post.id
@@ -155,7 +175,6 @@ class PostRepositoryImpl @Inject constructor(
             )
         )
 
-
     override suspend fun hasData(): Boolean {
         return try {
             val count = dao.getCount()
@@ -170,9 +189,7 @@ class PostRepositoryImpl @Inject constructor(
         dao.insert(PostEntity.fromDto(newPost))
     }
 
-
-    //    override suspend fun getImgNames(): List<String> {
-//        val posts = getAsync()
-//        return posts.map { it.authorAvatar }
-//    }
+    suspend fun clearCache() {
+        // dao.deleteAll()
+    }
 }
