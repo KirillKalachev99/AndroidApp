@@ -1,11 +1,15 @@
 package com.example.ansteducation.repository
 
+import androidx.paging.ExperimentalPagingApi
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import androidx.paging.map
 import com.example.ansteducation.api.PostApi
 import com.example.ansteducation.auth.AppAuth
 import com.example.ansteducation.dao.PostDao
+import com.example.ansteducation.dao.PostRemoteKeyDao
+import com.example.ansteducation.db.AppDb
 import com.example.ansteducation.dto.Attachment
 import com.example.ansteducation.dto.AttachmentType
 import com.example.ansteducation.dto.Media
@@ -34,13 +38,15 @@ class PostRepositoryImpl @Inject constructor(
     private val dao: PostDao,
     private val apiService: PostApi,
     private val appAuth: AppAuth,
+    postRemoteKeyDao: PostRemoteKeyDao,
+    appDb: AppDb,
 ) : PostRepository {
 
     private val mutex = Mutex()
     private var cachedNewPosts: List<Post> = emptyList()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override val data: Flow<PagingData<Post>> = appAuth.authState.flatMapLatest { token ->
+    @OptIn(ExperimentalPagingApi::class, ExperimentalCoroutinesApi::class)
+    override val data: Flow<PagingData<Post>> = appAuth.authState.flatMapLatest { _ ->
         Pager(
             config = PagingConfig(
                 pageSize = 10,
@@ -48,15 +54,20 @@ class PostRepositoryImpl @Inject constructor(
                 initialLoadSize = 20
             ),
             pagingSourceFactory = {
-                PostPagingSource(apiService)
-            }
+                dao.getPagingSource()
+            },
+            remoteMediator = PostRemoteMediator(
+                apiService = apiService,
+                postDao = dao,
+                postRemoteKeyDao = postRemoteKeyDao,
+                appDb = appDb,)
         ).flow
-    }
+    }.map { it.map(PostEntity::toDto) }
 
     override suspend fun getAsync() {
         try {
-            val posts = apiService.getAll()
-            dao.insert(posts.map(PostEntity::fromDto))
+            val posts = apiService.getLatest(10).body()
+            dao.insert(posts?.map(PostEntity::fromDto) ?: emptyList())
         } catch (e: Exception) {
             throw e
         }
@@ -86,7 +97,7 @@ class PostRepositoryImpl @Inject constructor(
                 dao.insert(cachedNewPosts.map(PostEntity::fromDto))
                 cachedNewPosts = emptyList()
             } else {
-                val posts = apiService.getAll()
+                val posts = apiService.getLatest(10).body() ?: emptyList()
                 dao.insert(posts.map(PostEntity::fromDto))
             }
         }
@@ -189,7 +200,7 @@ class PostRepositoryImpl @Inject constructor(
         dao.insert(PostEntity.fromDto(newPost))
     }
 
-    suspend fun clearCache() {
-        // dao.deleteAll()
-    }
+//    suspend fun clearCache() {
+//        // dao.deleteAll()
+//    }
 }

@@ -1,5 +1,6 @@
 package com.example.ansteducation.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -12,6 +13,9 @@ interface PostDao {
 
     @Query("SELECT * FROM PostEntity ORDER BY ABS(id) DESC, id DESC")
     fun getAll(): Flow<List<PostEntity>>
+
+    @Query("SELECT * FROM PostEntity ORDER BY ABS(id) DESC, id DESC")
+    fun getPagingSource(): PagingSource<Int, PostEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(post: PostEntity)
@@ -65,4 +69,7 @@ interface PostDao {
 
     @Query("SELECT COUNT(*) FROM PostEntity")
     suspend fun getCount(): Int
+
+    @Query("DELETE FROM PostEntity")
+    suspend fun clear()
 }

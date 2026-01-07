@@ -3,6 +3,7 @@ package com.example.ansteducation.db
 import android.content.Context
 import androidx.room.Room
 import com.example.ansteducation.dao.PostDao
+import com.example.ansteducation.dao.PostRemoteKeyDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,4 +32,7 @@ class DbModule {
     fun providePostDao(
         appDb: AppDb
     ): PostDao = appDb.postDao()
+
+    @Provides
+    fun providePostRemoteKeyDao(appDb: AppDb): PostRemoteKeyDao = appDb.postRemoteKeyDao()
 }

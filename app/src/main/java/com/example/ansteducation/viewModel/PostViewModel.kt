@@ -66,10 +66,6 @@ class PostViewModel @Inject constructor(
     val edited = MutableLiveData(empty)
     private var isSaving = false
 
-    val pagingDataFlow: Flow<PagingData<Post>> = repository.data
-        .cachedIn(viewModelScope)
-        .flowOn(Dispatchers.Default)
-
     private val _shouldCheckNewPosts = MutableLiveData(true)
 //    val newerCount = _shouldCheckNewPosts.switchMap { shouldCheck ->
 //        if (shouldCheck) {

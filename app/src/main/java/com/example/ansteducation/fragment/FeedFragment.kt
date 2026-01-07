@@ -105,12 +105,6 @@ class FeedFragment : Fragment() {
             }
         }
 
-        lifecycleScope.launch {
-            viewModel.pagingDataFlow.collectLatest { pagingData ->
-                adapter.submitData(pagingData)
-            }
-        }
-
         lifecycleScope.launchWhenCreated {
             adapter.loadStateFlow.collectLatest {
                 binding.swipeRefresh.isRefreshing = it.refresh is LoadState.Loading

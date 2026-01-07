@@ -30,9 +30,6 @@ interface AuthApi {
 
 
 interface PostApi {
-    @GET("posts")
-    suspend fun getAll(): List<Post>
-
     @POST("posts")
     suspend fun save(@Body post: Post): Post
 

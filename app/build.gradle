@@ -59,6 +59,7 @@ dependencies {
 
     //Paging 3
     implementation "androidx.paging:paging-runtime:3.3.6"
+    implementation "androidx.room:room-paging:2.6.1"
 
     // AndroidX
     implementation libs.androidx.core.ktx
