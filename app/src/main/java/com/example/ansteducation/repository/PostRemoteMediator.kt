@@ -29,20 +29,19 @@ class PostRemoteMediator(
         return try {
             val result = when (loadType) {
                 LoadType.REFRESH -> {
-                    val firstItem = state.firstItemOrNull()
-                    val newestPostId = firstItem?.id
+                    val maxKey = postRemoteKeyDao.max()
 
-                    if (newestPostId != null) {
-                        apiService.getAfter(newestPostId, state.config.pageSize)
+                    if (maxKey != null) {
+                        apiService.getAfter(maxKey, state.config.pageSize)
                     } else {
                         apiService.getLatest(state.config.pageSize)
                     }
                 }
 
                 LoadType.APPEND -> {
-                    val beforeKey = postRemoteKeyDao.getByType(PostRemoteKeyEntity.KeyType.BEFORE)
-                    val oldestPostId = beforeKey?.key ?: return MediatorResult.Success(endOfPaginationReached = true)
-                    apiService.getBefore(oldestPostId, state.config.pageSize)
+                    val minKey = postRemoteKeyDao.min()
+                    val id = minKey ?: return MediatorResult.Success(endOfPaginationReached = true)
+                    apiService.getBefore(id, state.config.pageSize)
                 }
 
                 LoadType.PREPEND -> {
@@ -63,35 +62,53 @@ class PostRemoteMediator(
             appDb.withTransaction {
                 when (loadType) {
                     LoadType.REFRESH -> {
+                        val existingMaxKey = postRemoteKeyDao.max()
                         val newestReceivedPostId = body.first().id
 
-                        val existingAfterKey = postRemoteKeyDao.getByType(PostRemoteKeyEntity.KeyType.AFTER)
-
-                        if (existingAfterKey == null || newestReceivedPostId > existingAfterKey.key) {
-                            postRemoteKeyDao.upsert(
-                                PostRemoteKeyEntity(
-                                    type = PostRemoteKeyEntity.KeyType.AFTER,
-                                    key = newestReceivedPostId
-                                )
-                            )
+                        val newMaxKey = if (existingMaxKey != null) {
+                            maxOf(existingMaxKey, newestReceivedPostId)
+                        } else {
+                            newestReceivedPostId
                         }
 
-                        if (existingAfterKey == null) {
-                            postRemoteKeyDao.upsert(
-                                PostRemoteKeyEntity(
-                                    type = PostRemoteKeyEntity.KeyType.BEFORE,
-                                    key = body.last().id
-                                )
-                            )
+                        val existingMinKey = postRemoteKeyDao.min()
+                        val oldestReceivedPostId = body.last().id
+
+                        val newMinKey = if (existingMinKey != null) {
+                            minOf(existingMinKey, oldestReceivedPostId)
+                        } else {
+                            oldestReceivedPostId
                         }
+
+                        postRemoteKeyDao.insert(
+                            PostRemoteKeyEntity(
+                                type = PostRemoteKeyEntity.KeyType.AFTER,
+                                key = newMaxKey
+                            )
+                        )
+
+                        postRemoteKeyDao.insert(
+                            PostRemoteKeyEntity(
+                                type = PostRemoteKeyEntity.KeyType.BEFORE,
+                                key = newMinKey
+                            )
+                        )
                     }
 
                     LoadType.APPEND -> {
+                        val existingMinKey = postRemoteKeyDao.min()
                         val oldestReceivedPostId = body.last().id
-                        postRemoteKeyDao.upsert(
+
+                        val newMinKey = if (existingMinKey != null) {
+                            minOf(existingMinKey, oldestReceivedPostId)
+                        } else {
+                            oldestReceivedPostId
+                        }
+
+                        postRemoteKeyDao.insert(
                             PostRemoteKeyEntity(
                                 type = PostRemoteKeyEntity.KeyType.BEFORE,
-                                key = oldestReceivedPostId
+                                key = newMinKey
                             )
                         )
                     }
@@ -115,8 +132,9 @@ class PostRemoteMediator(
     }
 
     override suspend fun initialize(): InitializeAction {
-        val hasData = postDao.getCount() > 0
-        return if (hasData) {
+        val hasKeys = postRemoteKeyDao.max() != null
+
+        return if (hasKeys) {
             InitializeAction.SKIP_INITIAL_REFRESH
         } else {
             InitializeAction.LAUNCH_INITIAL_REFRESH

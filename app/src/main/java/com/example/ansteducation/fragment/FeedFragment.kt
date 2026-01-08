@@ -24,7 +24,6 @@ import com.example.ansteducation.databinding.FragmentFeedBinding
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import java.util.Locale
 
 @AndroidEntryPoint
@@ -41,9 +40,7 @@ class FeedFragment : Fragment() {
         val currentLocale = Locale.getDefault()
         val language = currentLocale.language
 
-
         val viewModel: PostViewModel by activityViewModels()
-
 
         val adapter = PostAdapter(object : OnInteractionListener {
             override fun like(post: Post) {
@@ -89,14 +86,12 @@ class FeedFragment : Fragment() {
                 )
             }
         })
-        {
-            //  viewModel.view(it.id)
-        }
 
         binding.list.adapter = adapter
 
         binding.swipeRefresh.setOnRefreshListener {
             adapter.refresh()
+            viewModel.refreshData()
         }
 
         lifecycleScope.launchWhenCreated {
@@ -106,39 +101,29 @@ class FeedFragment : Fragment() {
         }
 
         lifecycleScope.launchWhenCreated {
-            adapter.loadStateFlow.collectLatest {
-                binding.swipeRefresh.isRefreshing = it.refresh is LoadState.Loading
-                        || it.append is LoadState.Loading
-                        || it.prepend is LoadState.Loading
+            adapter.loadStateFlow.collectLatest { loadState ->
+                binding.swipeRefresh.isRefreshing = loadState.refresh is LoadState.Loading
+                        || loadState.append is LoadState.Loading
+                        || loadState.prepend is LoadState.Loading
+
+                when {
+                    loadState.refresh is LoadState.Loading -> {
+                        viewModel.load()
+                    }
+                    loadState.refresh is LoadState.Error -> {
+                        viewModel.onDataLoadError()
+                    }
+                    loadState.refresh is LoadState.NotLoading -> {
+                        viewModel.onDataLoaded()
+                    }
+                }
             }
         }
-
-//        viewModel.data.observe(viewLifecycleOwner) { data ->
-//            val previousSize = adapter.currentList.size
-//            adapter.submitList(data.posts) {
-//                if (data.posts.size > previousSize) {
-//                    binding.list.scrollToPosition(0)
-//                }
-//            }
-//            binding.apply {
-//                empty.isVisible = data.empty
-//            }
-//        }
-
-//        viewModel.newerCount.observe(viewLifecycleOwner) {
-//            println(it)
-//            binding.apply {
-//                newerButton.isVisible = it > 0
-//                when (language) {
-//                    "ru" -> newerButton.text = getString(R.string.newer_posts) + " " + it.toString()
-//                    else -> newerButton.text = "Show $it new posts"
-//                }
-//            }
-//        }
 
         viewModel.state.observe(viewLifecycleOwner) { state ->
             binding.apply {
                 errorGroup.isVisible = state.error
+                progress.isVisible = state.loading
                 swipeRefresh.isRefreshing = state.refreshing
             }
 
@@ -148,6 +133,7 @@ class FeedFragment : Fragment() {
         }
 
         binding.retry.setOnClickListener {
+            adapter.refresh()
             viewModel.load()
         }
 
@@ -157,6 +143,7 @@ class FeedFragment : Fragment() {
         }
 
         binding.newerButton.setOnClickListener {
+            adapter.refresh()
             viewModel.addNewer()
         }
 
