@@ -10,6 +10,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
 import com.example.ansteducation.auth.AppAuth
+import com.example.ansteducation.dto.FeedItem
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.model.FeedModelState
 import com.example.ansteducation.model.PhotoModel
@@ -41,11 +42,15 @@ class PostViewModel @Inject constructor(
 ) : ViewModel() {
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val data: Flow<PagingData<Post>> = appAuth.authState.flatMapLatest { token ->
+    val data: Flow<PagingData<FeedItem>> = appAuth.authState.flatMapLatest { token ->
         repository.data
             .map { pagingData ->
                 pagingData.map { post ->
-                    post.copy(ownedByMe = post.authorId == token?.id)
+                    if (post is Post) {
+                        post.copy(ownedByMe = post.authorId == token?.id)
+                    } else {
+                        post
+                    }
                 }
             }
     }

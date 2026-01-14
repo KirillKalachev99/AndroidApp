@@ -4,14 +4,17 @@ import androidx.paging.ExperimentalPagingApi
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import androidx.paging.insertSeparators
 import androidx.paging.map
 import com.example.ansteducation.api.PostApi
 import com.example.ansteducation.auth.AppAuth
 import com.example.ansteducation.dao.PostDao
 import com.example.ansteducation.dao.PostRemoteKeyDao
 import com.example.ansteducation.db.AppDb
+import com.example.ansteducation.dto.Ad
 import com.example.ansteducation.dto.Attachment
 import com.example.ansteducation.dto.AttachmentType
+import com.example.ansteducation.dto.FeedItem
 import com.example.ansteducation.dto.Media
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.entity.PostEntity
@@ -32,6 +35,7 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.random.Random
 
 @Singleton
 class PostRepositoryImpl @Inject constructor(
@@ -46,7 +50,7 @@ class PostRepositoryImpl @Inject constructor(
     private var cachedNewPosts: List<Post> = emptyList()
 
     @OptIn(ExperimentalPagingApi::class, ExperimentalCoroutinesApi::class)
-    override val data: Flow<PagingData<Post>> = appAuth.authState.flatMapLatest { _ ->
+    override val data: Flow<PagingData<FeedItem>> = appAuth.authState.flatMapLatest { _ ->
         Pager(
             config = PagingConfig(
                 pageSize = 10,
@@ -60,9 +64,19 @@ class PostRepositoryImpl @Inject constructor(
                 apiService = apiService,
                 postDao = dao,
                 postRemoteKeyDao = postRemoteKeyDao,
-                appDb = appDb,)
+                appDb = appDb,
+            )
         ).flow
-    }.map { it.map(PostEntity::toDto) }
+    }.map { pagingData ->
+        pagingData.map((PostEntity::toDto))
+            .insertSeparators { previous, _ ->
+                if (previous?.id?.rem(5) == 0L) {
+                    Ad(Random.nextLong(), "figma.jpg")
+                } else {
+                    null
+                }
+            }
+    }
 
     override suspend fun getAsync() {
         try {
