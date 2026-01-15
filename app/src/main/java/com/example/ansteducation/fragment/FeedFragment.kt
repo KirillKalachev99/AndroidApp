@@ -3,6 +3,7 @@ package com.example.ansteducation.fragment
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -107,8 +108,6 @@ class FeedFragment : Fragment() {
         lifecycleScope.launchWhenCreated {
             adapter.loadStateFlow.collectLatest { loadState ->
                 binding.swipeRefresh.isRefreshing = loadState.refresh is LoadState.Loading
-                        || loadState.append is LoadState.Loading
-                        || loadState.prepend is LoadState.Loading
 
                 when {
                     loadState.refresh is LoadState.Loading -> {
