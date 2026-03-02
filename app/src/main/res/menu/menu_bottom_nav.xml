@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/feedFragment"
+        android:icon="@drawable/ic_netology_original_48dp"
+        android:title="@string/menu_posts"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/eventsFragment"
+        android:icon="@drawable/ic_outline_arrow_upward_24"
+        android:title="@string/menu_events"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/usersFragment"
+        android:icon="@drawable/ic_avatar_placeholder_48"
+        android:title="@string/menu_users"
+        app:showAsAction="never" />
+
+</menu>
+
