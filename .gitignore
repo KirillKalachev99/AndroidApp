@@ -22,6 +22,8 @@ out/
 ### Android Studio ###
 local.properties
 /google-services.json
+maps.properties
+apikey.properties
 captures/
 .externalNativeBuild
 .cxx

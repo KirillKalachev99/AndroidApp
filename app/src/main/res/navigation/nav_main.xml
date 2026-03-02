@@ -37,6 +37,12 @@
         tools:layout="@layout/auth_fragment" />
 
     <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.example.ansteducation.fragment.RegisterFragment"
+        android:label="register_fragment"
+        tools:layout="@layout/fragment_register" />
+
+    <fragment
         android:id="@+id/singlePostFragment"
         android:name="com.example.ansteducation.fragment.SinglePostFragment"
         android:label="SinglePostFragment" >
@@ -59,4 +65,42 @@
         android:name="com.example.ansteducation.fragment.FullscreenImageFragment"
         android:label="FullscreenImageFragment"
         tools:layout="@layout/fragment_fullscreen_image" />
+
+    <fragment
+        android:id="@+id/eventsFragment"
+        android:name="com.example.ansteducation.fragment.EventsFragment"
+        android:label="events_fragment"
+        tools:layout="@layout/fragment_events" >
+        <action
+            android:id="@+id/action_eventsFragment_to_newEventFragment"
+            app:destination="@id/newEventFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/newEventFragment"
+        android:name="com.example.ansteducation.fragment.NewEventFragment"
+        android:label="fragment_new_event"
+        tools:layout="@layout/fragment_new_event" />
+
+    <fragment
+        android:id="@+id/usersFragment"
+        android:name="com.example.ansteducation.fragment.UsersFragment"
+        android:label="users_fragment"
+        tools:layout="@layout/fragment_users" />
+
+    <fragment
+        android:id="@+id/userProfileFragment"
+        android:name="com.example.ansteducation.fragment.UserProfileFragment"
+        android:label="user_profile_fragment"
+        tools:layout="@layout/fragment_user_profile" >
+        <argument
+            android:name="userId"
+            app:argType="long" />
+        <argument
+            android:name="userName"
+            app:argType="string" />
+        <argument
+            android:name="userLogin"
+            app:argType="string" />
+    </fragment>
 </navigation>

@@ -3,6 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <group android:id="@+id/authorized">
         <item
+            android:id="@+id/menu_profile"
+            android:title="@string/menu_users" />
+        <item
             android:id="@+id/logout"
             android:title="@string/logout" />
     </group>

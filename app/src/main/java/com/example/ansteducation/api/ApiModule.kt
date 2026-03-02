@@ -32,12 +32,16 @@ class ApiModule {
     fun provideOkhttp(appAuth: AppAuth): OkHttpClient =
         OkHttpClient.Builder()
             .addInterceptor { chain ->
+                val originalRequest = chain.request()
+                val builder = originalRequest.newBuilder()
+                    .addHeader("Api-Key", BuildConfig.API_KEY)
+
                 appAuth.authState.value?.token?.let { token ->
-                    val newRequest = chain.request().newBuilder()
-                        .addHeader("Authorization", token)
-                        .build()
-                    chain.proceed(newRequest)
-                } ?: chain.proceed(chain.request())
+                    builder.addHeader("Authorization", token)
+                }
+
+                val newRequest = builder.build()
+                chain.proceed(newRequest)
             }
             .connectTimeout(30, TimeUnit.SECONDS)
             .apply {
@@ -54,6 +58,12 @@ class ApiModule {
     @AuthOkHttpClient
     fun provideAuthOkhttp(): OkHttpClient =
         OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val newRequest = chain.request().newBuilder()
+                    .addHeader("Api-Key", BuildConfig.API_KEY)
+                    .build()
+                chain.proceed(newRequest)
+            }
             .connectTimeout(30, TimeUnit.SECONDS)
             .apply {
                 if (BuildConfig.DEBUG) {
@@ -89,4 +99,16 @@ class ApiModule {
     @Provides
     @Singleton
     fun provideAuthApi(@AuthRetrofit retrofit: Retrofit): AuthApi = retrofit.create()
+
+    @Provides
+    @Singleton
+    fun provideUserApi(@PostRetrofit retrofit: Retrofit): UserApi = retrofit.create()
+
+    @Provides
+    @Singleton
+    fun provideJobApi(@PostRetrofit retrofit: Retrofit): JobApi = retrofit.create()
+
+    @Provides
+    @Singleton
+    fun provideEventApi(@PostRetrofit retrofit: Retrofit): EventApi = retrofit.create()
 }

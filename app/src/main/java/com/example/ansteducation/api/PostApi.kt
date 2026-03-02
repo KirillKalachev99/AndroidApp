@@ -26,6 +26,15 @@ interface AuthApi {
         @Field("login") login: String,
         @Field("pass") password: String
     ): Token
+
+    @Multipart
+    @POST("users/registration")
+    suspend fun register(
+        @Part("login") login: String,
+        @Part("pass") password: String,
+        @Part("name") name: String,
+        @Part avatar: MultipartBody.Part?
+    ): Token
 }
 
 
@@ -60,4 +69,7 @@ interface PostApi {
 
     @GET("posts/{id}/after")
     suspend fun getAfter(@Path("id") id: Long, @Query("count") count: Int): Response<List<Post>>
+
+    @GET("users/{id}/wall")
+    suspend fun getUserWall(@Path("id") id: Long): List<Post>
 }

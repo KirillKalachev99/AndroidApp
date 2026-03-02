@@ -18,6 +18,9 @@
     <string name="retry">Retry</string>
     <string name="new_post">Create your new post</string>
     <string name="your_feed">Your feed</string>
+    <string name="menu_posts">Posts</string>
+    <string name="menu_events">Events</string>
+    <string name="menu_users">Users</string>
     <string name="no_response">Server is not responding. Please, swipe to refresh</string>
     <string name="no_response_like">Server is not responding. Please, try again</string>
     <string name="no_response_send_post">Couldn\'t send post to server. Please, try again</string>
@@ -28,9 +31,17 @@
     <string name="sign_up">Sign up</string>
     <string name="enter_your_login">Enter your login</string>
     <string name="enter_your_password">Enter your password</string>
+    <string name="repeat_your_password">Repeat your password</string>
+    <string name="enter_your_name">Enter your name</string>
+    <string name="select_avatar">Select avatar</string>
     <string name="authorization">Authorization</string>
     <string name="log_in">Log in</string>
     <string name="loading">Loading...</string>
     <string name="google_play_unavailable">Google Api Unavailable\n</string>
+    <string name="user_wall">Wall</string>
+    <string name="user_jobs">Jobs</string>
+    <string name="add_job">Add job</string>
+    <string name="event_online">Online</string>
+    <string name="event_offline">Offline</string>
 
 </resources>

@@ -4,12 +4,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.ansteducation.R.*
-import com.example.ansteducation.activity.AppActivity
 import com.example.ansteducation.databinding.AuthFragmentBinding
 import com.example.ansteducation.viewModel.AuthViewModel
 import com.google.android.material.snackbar.Snackbar
@@ -66,12 +66,25 @@ class AuthFragment : Fragment() {
             val login = binding.loginInput.text.toString()
             val password = binding.passwordInput.text.toString()
 
-            if (login.isBlank() || password.isBlank()) {
-                showError("Please enter login and password")
-                return@setOnClickListener
+            var hasError = false
+
+            if (login.isBlank()) {
+                binding.loginInput.error = "Логин не может быть пустым"
+                hasError = true
+            } else {
+                binding.loginInput.error = null
             }
 
-            viewModel.authenticate(login, password)
+            if (password.isBlank()) {
+                binding.passwordInput.error = "Пароль не может быть пустым"
+                hasError = true
+            } else {
+                binding.passwordInput.error = null
+            }
+
+            if (!hasError) {
+                viewModel.authenticate(login, password)
+            }
         }
     }
 
@@ -82,7 +95,7 @@ class AuthFragment : Fragment() {
     }
 
     private fun showError(message: String) {
-        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 }
 

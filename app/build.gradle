@@ -6,6 +6,13 @@ plugins {
     id 'com.google.gms.google-services'
 }
 
+def apiPropertiesFile = rootProject.file("apikey.properties")
+def apiProperties = new Properties()
+if (apiPropertiesFile.exists()) {
+    apiProperties.load(new FileInputStream(apiPropertiesFile))
+}
+def apiKey = apiProperties.getProperty("API_KEY", "")
+
 android {
     namespace 'com.example.ansteducation'
     compileSdk 36
@@ -35,10 +42,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             manifestPlaceholders["usesCleartextTraffic"] = false
             buildConfigField "String", "BASE_URL", "\"https://10.0.2.2:9999/\""
+            buildConfigField "String", "API_KEY", "\"${apiKey}\""
         }
         debug {
             manifestPlaceholders["usesCleartextTraffic"] = true
             buildConfigField "String", "BASE_URL", "\"http://10.0.2.2:9999/\""
+            buildConfigField "String", "API_KEY", "\"${apiKey}\""
         }
     }
 
@@ -53,11 +62,9 @@ android {
 }
 
 dependencies {
-    // Hilt
     implementation libs.hilt.android
     kapt libs.hilt.compiler
 
-    //Paging 3
     implementation "androidx.paging:paging-runtime:3.3.6"
     implementation "androidx.room:room-paging:2.6.1"
 
@@ -87,7 +94,7 @@ dependencies {
     // UI
     implementation libs.glide
     implementation libs.imagepicker
-    implementation("com.github.yalantis:ucrop:2.2.11")
+    implementation(libs.ucrop)
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01"
 
     // Firebase

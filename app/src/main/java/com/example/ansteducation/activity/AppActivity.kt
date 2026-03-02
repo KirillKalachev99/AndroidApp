@@ -15,6 +15,7 @@ import androidx.core.view.MenuProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.navigation.findNavController
+import androidx.navigation.ui.setupWithNavController
 import com.example.ansteducation.R
 import com.example.ansteducation.auth.AppAuth
 import com.example.ansteducation.databinding.ActivityAppBinding
@@ -51,6 +52,9 @@ class AppActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        val navController = findNavController(R.id.nav_host_fragment)
+        binding.bottomNavigation.setupWithNavController(navController)
 
         firebaseMessaging.token.addOnCompleteListener { task ->
             if (!task.isSuccessful) {
@@ -105,8 +109,25 @@ class AppActivity : AppCompatActivity() {
 
                 override fun onMenuItemSelected(menuItem: MenuItem): Boolean =
                     when (menuItem.itemId) {
-                        R.id.signIn, R.id.signUp -> {
-                            findNavController(R.id.nav_host_fragment).navigate(R.id.action_feedFragment_to_authFragment)
+                        R.id.signIn -> {
+                            findNavController(R.id.nav_host_fragment).navigate(R.id.authFragment)
+                            true
+                        }
+
+                        R.id.signUp -> {
+                            findNavController(R.id.nav_host_fragment).navigate(R.id.registerFragment)
+                            true
+                        }
+
+                        R.id.menu_profile -> {
+                            val userId = authViewModel.data.value?.id ?: return false
+                            val bundle = Bundle().apply {
+                                putLong("userId", userId)
+                                putString("userName", "")
+                                putString("userLogin", "")
+                            }
+                            findNavController(R.id.nav_host_fragment)
+                                .navigate(R.id.userProfileFragment, bundle)
                             true
                         }
 
