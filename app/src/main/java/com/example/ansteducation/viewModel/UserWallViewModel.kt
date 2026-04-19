@@ -30,7 +30,7 @@ class UserWallViewModel @Inject constructor(
             try {
                 _loading.value = true
                 _error.value = null
-                _posts.value = postApi.getUserWall(userId)
+                _posts.value = postApi.getPostsByAuthor(userId)
             } catch (e: Exception) {
                 _error.value = e.message ?: "Не удалось загрузить стену пользователя"
             } finally {

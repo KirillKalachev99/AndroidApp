@@ -1,5 +1,6 @@
 package com.example.ansteducation.viewModel
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.LiveData
@@ -14,9 +15,12 @@ import com.example.ansteducation.dto.FeedItem
 import com.example.ansteducation.dto.Post
 import com.example.ansteducation.model.FeedModelState
 import com.example.ansteducation.model.PhotoModel
+import com.example.ansteducation.R
 import com.example.ansteducation.repository.PostRepository
+import com.example.ansteducation.util.requiresSignIn
 import com.example.ansteducation.util.SingleLiveEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -32,13 +36,14 @@ private val empty = Post(
     author = "",
     authorId = 0,
     content = "",
-    published = ""
+    published = "",
 )
 
 @HiltViewModel
 class PostViewModel @Inject constructor(
     private val repository: PostRepository,
-    private val appAuth: AppAuth
+    private val appAuth: AppAuth,
+    @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -68,6 +73,26 @@ class PostViewModel @Inject constructor(
     private val _photo = MutableLiveData<PhotoModel?>(null)
     val photo: LiveData<PhotoModel?>
         get() = _photo
+
+    private val _mentionIds = MutableLiveData<List<Long>>(emptyList())
+    val mentionIds: LiveData<List<Long>> = _mentionIds
+
+    private val _singlePost = MutableLiveData<Post?>(null)
+    val singlePost: LiveData<Post?> = _singlePost
+
+    private val _singlePostError = MutableLiveData<String?>(null)
+    val singlePostError: LiveData<String?> = _singlePostError
+
+    private val _snackbarMessage = SingleLiveEvent<String>()
+    val snackbarMessage: LiveData<String> = _snackbarMessage
+
+    private fun postSnackbarFromException(e: Exception, fallbackRes: Int) {
+        _snackbarMessage.value = when {
+            e.requiresSignIn() -> appContext.getString(R.string.snackbar_sign_in_required)
+            else -> e.message?.takeIf { it.isNotBlank() }
+                ?: appContext.getString(fallbackRes)
+        }
+    }
 
     init {
         viewModelScope.launch {
@@ -106,9 +131,15 @@ class PostViewModel @Inject constructor(
     fun like(post: Post) {
         viewModelScope.launch {
             try {
-                repository.likeByIdAsync(post)
+                val updated = repository.likeByIdAsync(post)
+                val uid = appAuth.authState.value?.id
+                val merged = updated.copy(ownedByMe = updated.authorId == uid)
+                if (_singlePost.value?.id == post.id) {
+                    _singlePost.value = merged
+                }
             } catch (e: Exception) {
-                Log.e("PostViewModel", "Like error: ${e.message}")
+                Log.e("PostViewModel", "Like error: ${e.message}", e)
+                postSnackbarFromException(e, R.string.no_response_like)
             }
         }
     }
@@ -117,8 +148,12 @@ class PostViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 repository.shareById(id)
+                if (_singlePost.value?.id == id) {
+                    _singlePost.value = repository.getById(id)
+                }
             } catch (e: Exception) {
                 Log.e("PostViewModel", "Repost error: ${e.message}")
+                postSnackbarFromException(e, R.string.no_response_like)
             }
         }
     }
@@ -129,6 +164,7 @@ class PostViewModel @Inject constructor(
                 repository.removeByIdAsync(id)
             } catch (e: Exception) {
                 Log.e("PostViewModel", "Remove error: ${e.message}")
+                postSnackbarFromException(e, R.string.error_title)
             }
         }
     }
@@ -142,6 +178,7 @@ class PostViewModel @Inject constructor(
             try {
                 val currentEdited = edited.value ?: empty
 
+                val mIds = _mentionIds.value.orEmpty()
                 if (currentEdited.id == 0L) {
                     val newPost = Post(
                         id = 0,
@@ -154,21 +191,29 @@ class PostViewModel @Inject constructor(
                         views = 0,
                         likedByMe = false,
                         sharedByMe = false,
-                        viewedByMe = false
+                        viewedByMe = false,
+                        mentions = emptyList(),
+                        mentionIds = mIds.takeIf { it.isNotEmpty() },
                     )
                     repository.saveAsync(newPost, update = false, image = _photo.value?.file)
                 } else {
-                    val updatedPost = currentEdited.copy(content = content)
+                    val updatedPost = currentEdited.copy(
+                        content = content,
+                        mentions = emptyList(),
+                        mentionIds = mIds.takeIf { it.isNotEmpty() },
+                    )
                     repository.saveAsync(updatedPost, update = true, image = _photo.value?.file)
                 }
 
                 edited.value = empty
                 _photo.value = null
+                _mentionIds.value = emptyList()
                 _postCreated.value = Unit
 
                 _state.value = FeedModelState(refreshing = true)
             } catch (e: Exception) {
                 Log.e("PostViewModel", "Save error: ${e.message}")
+                postSnackbarFromException(e, R.string.no_response_send_post)
                 _state.value = FeedModelState(error = true)
             } finally {
                 isSaving = false
@@ -179,9 +224,10 @@ class PostViewModel @Inject constructor(
     fun retryPost(post: Post) {
         viewModelScope.launch {
             try {
-                repository.saveAsync(post, update = true, image = null)
+                repository.saveAsync(post, update = false, image = null)
             } catch (e: Exception) {
                 Log.e("PostViewModel", "Retry failed: ${e.message}")
+                postSnackbarFromException(e, R.string.no_response_send_post)
             }
         }
     }
@@ -192,11 +238,17 @@ class PostViewModel @Inject constructor(
 
     fun edit(post: Post) {
         edited.value = post
+        _mentionIds.value = post.mentions.orEmpty().map { it.id }
+    }
+
+    fun setMentionIds(ids: List<Long>) {
+        _mentionIds.value = ids.distinct()
     }
 
     fun clear() {
         edited.value = empty
         _photo.value = null
+        _mentionIds.value = emptyList()
     }
 
     fun changePhoto(uri: Uri, file: File) {
@@ -205,5 +257,21 @@ class PostViewModel @Inject constructor(
 
     fun removePhoto() {
         _photo.value = null
+    }
+
+    fun loadPost(id: Long) {
+        viewModelScope.launch {
+            if (_singlePost.value?.id == id && _singlePostError.value == null) {
+                return@launch
+            }
+            _singlePost.value = null
+            _singlePostError.value = null
+            try {
+                _singlePost.value = repository.getById(id)
+            } catch (e: Exception) {
+                _singlePost.value = null
+                _singlePostError.value = e.message ?: "Не удалось загрузить пост"
+            }
+        }
     }
 }

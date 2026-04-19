@@ -7,15 +7,18 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
+import androidx.fragment.app.viewModels
 import com.example.ansteducation.R
 import com.example.ansteducation.databinding.FragmentUserProfileBinding
 import com.google.android.material.tabs.TabLayout
+import com.example.ansteducation.viewModel.UserProfileHeaderViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class UserProfileFragment : Fragment() {
 
     private lateinit var binding: FragmentUserProfileBinding
+    private val headerViewModel: UserProfileHeaderViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,8 +36,18 @@ class UserProfileFragment : Fragment() {
         val userName = requireArguments().getString(ARG_USER_NAME).orEmpty()
         val userLogin = requireArguments().getString(ARG_USER_LOGIN).orEmpty()
 
-        (activity as? AppCompatActivity)?.supportActionBar?.title =
-            "$userName (@$userLogin)"
+        if (userName.isBlank() && userLogin.isBlank()) {
+            headerViewModel.load(userId)
+            headerViewModel.user.observe(viewLifecycleOwner) { user ->
+                if (user != null) {
+                    (activity as? AppCompatActivity)?.supportActionBar?.title =
+                        "${user.name} (@${user.login})"
+                }
+            }
+        } else {
+            (activity as? AppCompatActivity)?.supportActionBar?.title =
+                "$userName (@$userLogin)"
+        }
 
         val tabWall = binding.tabLayout.newTab().setText(R.string.user_wall)
         val tabJobs = binding.tabLayout.newTab().setText(R.string.user_jobs)

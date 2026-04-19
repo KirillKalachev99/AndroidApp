@@ -3,98 +3,104 @@ package com.example.ansteducation.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.net.toUri
-import androidx.recyclerview.widget.RecyclerView
+import android.widget.PopupMenu
 import com.bumptech.glide.Glide
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
 import com.example.ansteducation.R
-import com.example.ansteducation.databinding.ItemEventBinding
+import com.example.ansteducation.databinding.CardEventBinding
 import com.example.ansteducation.dto.Event
+import com.example.ansteducation.dto.EventType
+import com.example.ansteducation.util.ServerUrls
+import com.example.ansteducation.util.formatApiDateTime
 
 interface OnEventInteractionListener {
-    fun like(event: Event)
-    fun remove(event: Event)
-    fun onClick(event: Event)
+    fun onLike(event: Event) {}
+    fun onRemove(event: Event) {}
+    fun onEdit(event: Event) {}
+    fun onClick(event: Event) {}
 }
 
 class EventsAdapter(
-    private val listener: OnEventInteractionListener
-) : RecyclerView.Adapter<EventsAdapter.EventViewHolder>() {
-
-    var items: List<Event> = emptyList()
-        set(value) {
-            field = value
-            notifyDataSetChanged()
-        }
+    private val onInteractionListener: OnEventInteractionListener,
+) : ListAdapter<Event, EventViewHolder>(EventDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EventViewHolder {
-        val binding = ItemEventBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
-        return EventViewHolder(binding, listener)
+        val binding = CardEventBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return EventViewHolder(binding, onInteractionListener)
     }
 
     override fun onBindViewHolder(holder: EventViewHolder, position: Int) {
-        holder.bind(items[position])
+        holder.bind(getItem(position))
     }
+}
 
-    override fun getItemCount(): Int = items.size
+class EventViewHolder(
+    private val binding: CardEventBinding,
+    private val onInteractionListener: OnEventInteractionListener,
+) : RecyclerView.ViewHolder(binding.root) {
 
-    class EventViewHolder(
-        private val binding: ItemEventBinding,
-        private val listener: OnEventInteractionListener
-    ) : RecyclerView.ViewHolder(binding.root) {
-
-        fun bind(event: Event) {
-            val endpointImg = "http://10.0.2.2:9999/avatars/"
-
-            binding.author.text = event.author
-            binding.published.text = event.published
-            binding.datetime.text = event.datetime
-            binding.type.text = if (event.type.name == "OFFLINE") {
-                binding.root.context.getString(R.string.event_offline)
+    fun bind(event: Event) {
+        binding.apply {
+            author.text = event.author
+            authorJob.text = event.authorJob ?: root.context.getString(R.string.author_job_searching)
+            published.text = formatApiDateTime(event.published)
+            content.text = event.content
+            eventType.text = if (event.type == EventType.OFFLINE) {
+                root.context.getString(R.string.event_type_offline)
             } else {
-                binding.root.context.getString(R.string.event_online)
+                root.context.getString(R.string.event_type_online)
             }
-            binding.content.text = event.content
-            binding.like.text = event.likes.toString()
-            binding.like.isChecked = event.likedByMe
+            datetime.text = formatApiDateTime(event.datetime)
+            like.isChecked = event.likedByMe
+            like.text = event.likes.toString()
 
-            Glide.with(binding.root)
-                .load(event.authorAvatar?.let { endpointImg + it })
+            Glide.with(root)
+                .load(ServerUrls.avatar(event.authorAvatar))
                 .placeholder(R.drawable.ic_avatar_placeholder_48)
                 .error(R.drawable.ic_avatar_error_48)
                 .circleCrop()
-                .into(binding.avatar)
+                .into(avatar)
 
-            val hasLink = !event.link.isNullOrBlank()
-            binding.link.visibility = if (hasLink) View.VISIBLE else View.GONE
-            if (hasLink) {
-                binding.link.text = event.link
-                binding.link.setOnClickListener {
-                    val intent = android.content.Intent(
-                        android.content.Intent.ACTION_VIEW,
-                        event.link!!.toUri()
-                    )
-                    binding.root.context.startActivity(intent)
-                }
+            menu.visibility = if (event.ownedByMe) View.VISIBLE else View.INVISIBLE
+
+            menu.setOnClickListener { view ->
+                PopupMenu(view.context, view).apply {
+                    inflate(R.menu.menu_post)
+                    setOnMenuItemClickListener { item ->
+                        when (item.itemId) {
+                            R.id.remove -> {
+                                onInteractionListener.onRemove(event)
+                                true
+                            }
+                            R.id.edit -> {
+                                onInteractionListener.onEdit(event)
+                                true
+                            }
+                            else -> false
+                        }
+                    }
+                }.show()
             }
 
-            binding.like.setOnClickListener {
-                listener.like(event)
+            like.setOnClickListener {
+                onInteractionListener.onLike(event)
             }
 
-            binding.menu.setOnClickListener {
-                if (event.ownedByMe) {
-                    listener.remove(event)
-                }
-            }
-
-            binding.root.setOnClickListener {
-                listener.onClick(event)
+            root.setOnClickListener {
+                onInteractionListener.onClick(event)
             }
         }
     }
 }
 
+class EventDiffCallback : DiffUtil.ItemCallback<Event>() {
+    override fun areItemsTheSame(oldItem: Event, newItem: Event): Boolean {
+        return oldItem.id == newItem.id
+    }
+
+    override fun areContentsTheSame(oldItem: Event, newItem: Event): Boolean {
+        return oldItem == newItem
+    }
+}

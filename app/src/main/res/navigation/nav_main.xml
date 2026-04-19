@@ -5,6 +5,20 @@
     android:id="@+id/nav_main"
     app:startDestination="@id/feedFragment">
 
+    <action
+        android:id="@+id/action_global_postCommentsFragment"
+        app:destination="@id/postCommentsFragment" />
+
+    <fragment
+        android:id="@+id/postCommentsFragment"
+        android:name="com.example.ansteducation.fragment.PostCommentsFragment"
+        android:label="post_comments_fragment"
+        tools:layout="@layout/fragment_post_comments">
+        <argument
+            android:name="postId"
+            app:argType="long" />
+    </fragment>
+
     <fragment
         android:id="@+id/feedFragment"
         android:name="com.example.ansteducation.fragment.FeedFragment"
@@ -74,13 +88,31 @@
         <action
             android:id="@+id/action_eventsFragment_to_newEventFragment"
             app:destination="@id/newEventFragment" />
+        <action
+            android:id="@+id/action_eventsFragment_to_eventDetailFragment"
+            app:destination="@id/eventDetailFragment" />
     </fragment>
 
     <fragment
         android:id="@+id/newEventFragment"
         android:name="com.example.ansteducation.fragment.NewEventFragment"
         android:label="fragment_new_event"
-        tools:layout="@layout/fragment_new_event" />
+        tools:layout="@layout/fragment_new_event" >
+        <argument
+            android:name="eventId"
+            android:defaultValue="0L"
+            app:argType="long" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/eventDetailFragment"
+        android:name="com.example.ansteducation.fragment.EventDetailFragment"
+        android:label="fragment_event_detail"
+        tools:layout="@layout/fragment_event_detail" >
+        <argument
+            android:name="eventId"
+            app:argType="long" />
+    </fragment>
 
     <fragment
         android:id="@+id/usersFragment"

@@ -16,6 +16,8 @@ data class Event(
     val attachment: Attachment? = null,
     val link: String? = null,
     val ownedByMe: Boolean = false,
+    val coords: Coordinates? = null,
+    val authorJob: String? = null,
 )
 
 enum class EventType {

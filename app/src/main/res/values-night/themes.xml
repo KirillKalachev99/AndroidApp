@@ -1,5 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.AnStEducation" parent="Theme.Material3.DayNight">
+    <!-- Тёмная тема: цвета из values-night/colors.xml; только флаги окна. -->
+    <style name="Theme.AnStEducation" parent="Base.Theme.AnStEducation">
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
     </style>
 </resources>

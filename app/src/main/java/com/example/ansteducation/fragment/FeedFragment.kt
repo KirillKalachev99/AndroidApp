@@ -12,6 +12,8 @@ import com.example.ansteducation.R
 import com.example.ansteducation.adapter.OnInteractionListener
 import com.example.ansteducation.adapter.PostAdapter
 import com.example.ansteducation.dto.Post
+import com.example.ansteducation.util.SharePostWithRepostLauncher
+import com.example.ansteducation.viewModel.AuthViewModel
 import com.example.ansteducation.viewModel.PostViewModel
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
@@ -23,6 +25,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.paging.LoadState
 import com.example.ansteducation.adapter.PostLoadingStateAdapter
 import com.example.ansteducation.databinding.FragmentFeedBinding
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -30,6 +33,15 @@ import java.util.Locale
 
 @AndroidEntryPoint
 class FeedFragment : Fragment() {
+
+    private val authViewModel: AuthViewModel by activityViewModels()
+    private val viewModel: PostViewModel by activityViewModels()
+    private lateinit var shareWithRepost: SharePostWithRepostLauncher
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        shareWithRepost = SharePostWithRepostLauncher(this) { viewModel.repost(it) }
+    }
 
     @SuppressLint("SetTextI18n")
     override fun onCreateView(
@@ -42,16 +54,20 @@ class FeedFragment : Fragment() {
         val currentLocale = Locale.getDefault()
         val language = currentLocale.language
 
-        val viewModel: PostViewModel by activityViewModels()
-
         val adapter = PostAdapter(object : OnInteractionListener {
             override fun like(post: Post) {
                 viewModel.like(post)
             }
 
             override fun share(post: Post) {
-                sharePost(post)
-                viewModel.repost(post.id)
+                shareWithRepost.launch(post)
+            }
+
+            override fun onCommentsClick(post: Post) {
+                findNavController().navigate(
+                    R.id.action_global_postCommentsFragment,
+                    bundleOf(PostCommentsFragment.ARG_POST_ID to post.id),
+                )
             }
 
             override fun remove(post: Post) {
@@ -110,15 +126,13 @@ class FeedFragment : Fragment() {
                 binding.swipeRefresh.isRefreshing = loadState.refresh is LoadState.Loading
 
                 when {
-                    loadState.refresh is LoadState.Loading -> {
-                        viewModel.load()
-                    }
                     loadState.refresh is LoadState.Error -> {
                         viewModel.onDataLoadError()
                     }
                     loadState.refresh is LoadState.NotLoading -> {
                         viewModel.onDataLoaded()
                     }
+                    else -> Unit
                 }
             }
         }
@@ -127,12 +141,15 @@ class FeedFragment : Fragment() {
             binding.apply {
                 errorGroup.isVisible = state.error
                 progress.isVisible = state.loading
-                swipeRefresh.isRefreshing = state.refreshing
             }
 
             if (state.error && !state.loading) {
                 Snackbar.make(binding.root, R.string.no_response, Snackbar.LENGTH_SHORT).show()
             }
+        }
+
+        viewModel.snackbarMessage.observe(viewLifecycleOwner) { msg ->
+            Snackbar.make(binding.root, msg, Snackbar.LENGTH_LONG).show()
         }
 
         binding.retry.setOnClickListener {
@@ -141,8 +158,22 @@ class FeedFragment : Fragment() {
         }
 
         binding.add.setOnClickListener {
-            findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
-            viewModel.clear()
+            if (authViewModel.isAuthorized) {
+                findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
+                viewModel.clear()
+            } else {
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.auth_required_title)
+                    .setMessage(R.string.auth_required_message)
+                    .setPositiveButton(R.string.sign_in) { _, _ ->
+                        findNavController().navigate(R.id.action_feedFragment_to_authFragment)
+                    }
+                    .setNeutralButton(R.string.sign_up) { _, _ ->
+                        findNavController().navigate(R.id.registerFragment)
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
         }
 
         binding.newerButton.setOnClickListener {
@@ -151,15 +182,6 @@ class FeedFragment : Fragment() {
         }
 
         return binding.root
-    }
-
-    private fun sharePost(post: Post) {
-        val intent = Intent().apply {
-            action = Intent.ACTION_SEND
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, post.content)
-        }
-        startActivity(Intent.createChooser(intent, getString(R.string.chooser_share_post)))
     }
 
     private fun openVideoUrl(url: String) {

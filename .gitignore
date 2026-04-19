@@ -24,6 +24,7 @@ local.properties
 /google-services.json
 maps.properties
 apikey.properties
+server.properties
 captures/
 .externalNativeBuild
 .cxx

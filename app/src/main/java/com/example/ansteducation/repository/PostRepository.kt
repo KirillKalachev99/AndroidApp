@@ -19,4 +19,6 @@ interface PostRepository {
     suspend fun hasData(): Boolean
     suspend fun updatePost(oldId: Long, newPost: Post)
 
+    suspend fun getById(id: Long): Post
+
 }

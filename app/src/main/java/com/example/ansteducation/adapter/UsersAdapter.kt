@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.ansteducation.R
+import com.example.ansteducation.util.ServerUrls
 import com.example.ansteducation.databinding.ItemUserBinding
 import com.example.ansteducation.dto.User
 
@@ -39,13 +40,11 @@ class UsersAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(user: User) {
-            val endpointImg = "http://10.0.2.2:9999/avatars/"
-
             binding.userName.text = user.name
             binding.userLogin.text = user.login
 
             Glide.with(binding.root)
-                .load(user.avatar?.let { endpointImg + it })
+                .load(ServerUrls.avatar(user.avatar))
                 .placeholder(R.drawable.ic_avatar_placeholder_48)
                 .error(R.drawable.ic_avatar_error_48)
                 .circleCrop()

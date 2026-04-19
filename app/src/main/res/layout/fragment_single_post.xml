@@ -10,12 +10,83 @@
         android:fillViewport="true"
         tools:ignore="UselessParent">
 
-        <include
-            android:id="@+id/single_post"
-            layout="@layout/card_post"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
+            <include
+                android:id="@+id/single_post"
+                layout="@layout/card_post"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/author_job"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/common_margin"
+                android:visibility="gone"
+                tools:text="Последнее место работы"
+                tools:visibility="visible" />
+
+            <TextView
+                android:id="@+id/mentions_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="@dimen/common_margin"
+                android:paddingEnd="@dimen/common_margin"
+                android:text="@string/post_mentions"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <TextView
+                android:id="@+id/mentions_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/common_margin"
+                android:visibility="gone"
+                tools:text="@sample/users.json/data/name"
+                tools:visibility="visible" />
+
+            <TextView
+                android:id="@+id/post_link"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/common_margin"
+                android:textColor="@color/confirm_button_color"
+                android:visibility="gone"
+                tools:text="https://example.com"
+                tools:visibility="visible" />
+
+            <TextView
+                android:id="@+id/map_link"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/common_margin"
+                android:text="@string/open_on_map"
+                android:textColor="@color/confirm_button_color"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <ProgressBar
+                android:id="@+id/progress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:padding="@dimen/common_margin"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/error_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="@dimen/common_margin"
+                android:textColor="@color/error_color"
+                android:visibility="gone" />
+        </LinearLayout>
     </ScrollView>
 
 </FrameLayout>

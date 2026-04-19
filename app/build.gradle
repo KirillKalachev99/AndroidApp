@@ -13,6 +13,21 @@ if (apiPropertiesFile.exists()) {
 }
 def apiKey = apiProperties.getProperty("API_KEY", "")
 
+def serverPropsFile = rootProject.file("server.properties")
+// Дипломный сервер по умолчанию; для локального backend переопределите в server.properties
+def serverOrigin = "http://94.228.125.136:8080"
+if (serverPropsFile.exists()) {
+    def sp = new Properties()
+    serverPropsFile.withInputStream { sp.load(it) }
+    def u = sp.getProperty("serverUrl", serverOrigin)?.trim()
+    if (u != null && !u.isEmpty()) {
+        serverOrigin = u
+    }
+}
+serverOrigin = serverOrigin.replaceAll(/\/+$/, "")
+def apiBaseUrl = "${serverOrigin}/api/"
+def serverOriginSlash = "${serverOrigin}/"
+
 android {
     namespace 'com.example.ansteducation'
     compileSdk 36
@@ -29,6 +44,11 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // Retrofit baseUrl must end with /
+        buildConfigField "String", "API_BASE_URL", "\"${apiBaseUrl}\""
+        // Корень сервера для Glide: .../avatars/ .../media/
+        buildConfigField "String", "SERVER_ORIGIN", "\"${serverOriginSlash}\""
     }
 
     buildFeatures {
@@ -41,12 +61,10 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             manifestPlaceholders["usesCleartextTraffic"] = false
-            buildConfigField "String", "BASE_URL", "\"https://10.0.2.2:9999/\""
             buildConfigField "String", "API_KEY", "\"${apiKey}\""
         }
         debug {
             manifestPlaceholders["usesCleartextTraffic"] = true
-            buildConfigField "String", "BASE_URL", "\"http://10.0.2.2:9999/\""
             buildConfigField "String", "API_KEY", "\"${apiKey}\""
         }
     }

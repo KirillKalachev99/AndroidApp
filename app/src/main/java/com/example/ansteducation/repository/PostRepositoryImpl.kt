@@ -17,8 +17,9 @@ import com.example.ansteducation.dto.AttachmentType
 import com.example.ansteducation.dto.FeedItem
 import com.example.ansteducation.dto.Media
 import com.example.ansteducation.dto.Post
+import com.example.ansteducation.dto.PostPayload
+import com.example.ansteducation.dto.likeDisplayCount
 import com.example.ansteducation.entity.PostEntity
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -26,8 +27,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import okhttp3.MultipartBody
@@ -68,10 +67,14 @@ class PostRepositoryImpl @Inject constructor(
             )
         ).flow
     }.map { pagingData ->
-        pagingData.map((PostEntity::toDto))
+        pagingData.map(PostEntity::toDto)
             .insertSeparators { previous, _ ->
                 if (previous?.id?.rem(5) == 0L) {
-                    Ad(Random.nextLong(), "figma.jpg")
+                    Ad(
+                        id = Random.nextLong(),
+                        image = "figma.jpg",
+                        fallbackDrawable = null,
+                    )
                 } else {
                     null
                 }
@@ -96,7 +99,6 @@ class PostRepositoryImpl @Inject constructor(
                     cachedNewPosts = newPosts
                 }
                 emit(newPosts.size)
-                println("DEBUG: Found and cached ${newPosts.size} new posts")
             } catch (_: Exception) {
                 emit(0)
             }
@@ -119,31 +121,34 @@ class PostRepositoryImpl @Inject constructor(
 
     override suspend fun likeByIdAsync(post: Post): Post {
         val postId = post.id
+        val snapshot = post
         val alreadyLiked = post.likedByMe
-
-        dao.likeById(postId)
-
-        val locallyUpdatedPost = post.copy(
+        val baseCount = post.likeDisplayCount
+        val optimistic = post.copy(
             likedByMe = !alreadyLiked,
-            likes = if (!alreadyLiked) post.likes + 1 else post.likes - 1
+            likes = if (!alreadyLiked) baseCount + 1 else maxOf(0, baseCount - 1),
+            likeOwnerIds = emptyList(),
         )
-
-        try {
+        dao.insert(PostEntity.fromDto(optimistic))
+        return try {
             val serverUpdatedPost = if (!alreadyLiked) {
                 apiService.likeById(postId)
             } else {
                 apiService.dislikeById(postId)
             }
-            return serverUpdatedPost
-
-        } catch (_: Exception) {
-            dao.likeById(postId)
-            return locallyUpdatedPost
+            dao.insert(PostEntity.fromDto(serverUpdatedPost))
+            serverUpdatedPost
+        } catch (e: Exception) {
+            dao.insert(PostEntity.fromDto(snapshot))
+            throw e
         }
     }
 
     override suspend fun shareById(id: Long) {
-        TODO("Not yet implemented")
+        try {
+            dao.shareById(id)
+        } catch (_: Exception) {
+        }
     }
 
     override suspend fun removeByIdAsync(id: Long) {
@@ -155,40 +160,105 @@ class PostRepositoryImpl @Inject constructor(
         }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
-    override suspend fun saveAsync(post: Post, update: Boolean, image: File?): Post {
-        val localId = System.currentTimeMillis()
-        val localPost = post.copy(id = localId)
+    override suspend fun saveAsync(post: Post, update: Boolean, image: File?): Post = when {
+        post.id < 0 -> retryFailedPost(post, image)
+        update && post.id > 0 -> saveServerEdit(post, image)
+        else -> saveNewPost(post, image)
+    }
 
-        dao.insert(PostEntity.fromDto(localPost))
+    private fun enrichAuthor(post: Post): Post {
+        val uid = appAuth.authState.value?.id ?: return post
+        return if (post.authorId == 0L) post.copy(authorId = uid) else post
+    }
 
-        if (!update) {
-            supervisorScope {
-                launch {
-                    try {
-                        val media = image?.let { upload(it) }
-                        val postWithAttachment = media?.let {
-                            post.copy(
-                                attachment = Attachment(
-                                    it.id,
-                                    AttachmentType.IMAGE
-                                ),
-                                id = 0
-                            )
-                        } ?: post.copy(id = 0)
-
-                        val serverPost = apiService.save(postWithAttachment)
-
-                        updatePost(localId, serverPost)
-
-                    } catch (_: Exception) {
-                        val failedPost = localPost.copy(id = -localId)
-                        updatePost(localId, failedPost)
-                    }
-                }
-            }
+    private fun Post.toSavePayload(): PostPayload {
+        val authId = appAuth.authState.value?.id ?: 0L
+        val authorIdOut = when {
+            authorId != 0L -> authorId
+            authId != 0L -> authId
+            else -> 0L
         }
-        return localPost
+        val idOut = when {
+            id < 0 -> 0L
+            id >= 1_000_000_000_000L -> 0L
+            else -> id
+        }
+        return PostPayload(
+            id = idOut,
+            content = content,
+            authorId = authorIdOut,
+            author = author.takeIf { it.isNotBlank() },
+            published = published.takeIf { it.isNotBlank() },
+            mentionIds = mentionIds?.takeIf { it.isNotEmpty() },
+            coords = coords,
+            link = link?.takeIf { it.isNotBlank() },
+            attachment = attachment,
+            video = video?.takeIf { it.isNotBlank() },
+        )
+    }
+
+    private suspend fun saveNewPost(post: Post, image: File?): Post {
+        val localId = System.currentTimeMillis()
+        val enriched = enrichAuthor(post)
+        val localPost = enriched.copy(id = localId)
+        dao.insert(PostEntity.fromDto(localPost))
+        return try {
+            val media = image?.let { upload(it) }
+            val bodyBase = enriched.copy(id = 0)
+            val toSend = media?.let {
+                bodyBase.copy(
+                    attachment = Attachment(it.id, AttachmentType.IMAGE),
+                )
+            } ?: bodyBase
+            val payload = toSend.toSavePayload()
+            check(payload.authorId != 0L) { "Войдите в аккаунт, чтобы опубликовать пост" }
+            val serverPost = apiService.save(payload)
+            updatePost(localId, serverPost)
+            serverPost
+        } catch (e: Exception) {
+            updatePost(localId, localPost.copy(id = -localId))
+            throw e
+        }
+    }
+
+    private suspend fun saveServerEdit(post: Post, image: File?): Post {
+        val enriched = enrichAuthor(post)
+        val media = image?.let { upload(it) }
+        val toSend = if (media != null) {
+            enriched.copy(attachment = Attachment(media.id, AttachmentType.IMAGE))
+        } else {
+            enriched
+        }
+        val payload = toSend.toSavePayload()
+        check(payload.authorId != 0L) { "Войдите в аккаунт, чтобы сохранить пост" }
+        val serverPost = apiService.save(payload)
+        updatePost(post.id, serverPost)
+        return serverPost
+    }
+
+    private suspend fun retryFailedPost(post: Post, image: File?): Post {
+        val failedId = post.id
+        check(failedId < 0) { "Повторная отправка только для поста с ошибкой" }
+        val localId = -failedId
+        dao.removeById(failedId)
+        val enriched = enrichAuthor(post.copy(id = localId))
+        val sending = enriched.copy(id = localId)
+        dao.insert(PostEntity.fromDto(sending))
+        return try {
+            val media = image?.let { upload(it) }
+            val bodyBase = enriched.copy(id = 0)
+            val toSend = media?.let {
+                bodyBase.copy(attachment = Attachment(it.id, AttachmentType.IMAGE))
+            } ?: bodyBase
+            val payload = toSend.toSavePayload()
+            check(payload.authorId != 0L) { "Войдите в аккаунт, чтобы опубликовать пост" }
+            val serverPost = apiService.save(payload)
+            updatePost(localId, serverPost)
+            serverPost
+        } catch (e: Exception) {
+            updatePost(localId, sending.copy(id = -localId))
+            throw e
+        }
     }
 
     private suspend fun upload(file: File): Media =
@@ -213,6 +283,8 @@ class PostRepositoryImpl @Inject constructor(
         dao.removeById(oldId)
         dao.insert(PostEntity.fromDto(newPost))
     }
+
+    override suspend fun getById(id: Long): Post = apiService.getById(id)
 
 //    suspend fun clearCache() {
 //        // dao.deleteAll()

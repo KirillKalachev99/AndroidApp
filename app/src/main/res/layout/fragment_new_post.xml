@@ -36,6 +36,14 @@
                 tools:ignore="DuplicateSpeakableTextCheck,VisualLintTextFieldSize"
                 tools:text="@tools:sample/lorem[150]" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/mentions_button"
+                style="@style/Widget.AnStEducation.Button.Tonal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/common_margin"
+                android:text="@string/post_mentions" />
+
             <FrameLayout
                 android:id="@+id/previewContainer"
                 android:layout_width="match_parent"
@@ -48,10 +56,9 @@
                     android:adjustViewBounds="true"
                     tools:srcCompat="@tools:sample/backgrounds/scenic" />
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                 android:id="@+id/removePhoto"
-                android:backgroundTint="@color/confirm_button_color"
-                android:textColor="@color/black"
+                style="@style/Widget.AnStEducation.Button.Outlined"
                 android:visibility="gone"
                 tools:visibility="visible"
                 android:layout_width="wrap_content"

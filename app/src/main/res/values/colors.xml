@@ -2,9 +2,40 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="icon_color">#5B5B5B</color>
-    <color name="confirm_button_color">#A5D6A7</color>
-    <color name="bottom_appbar_color">#CE93D8</color>
-    <color name="hint_color">#546E7A</color>
-    <color name="error_color">#FFFF0000</color>
+
+    <!-- Material 3 light -->
+    <color name="md_primary">#4E5FD9</color>
+    <color name="md_on_primary">#FFFFFF</color>
+    <color name="md_primary_container">#E0E4FF</color>
+    <color name="md_on_primary_container">#1A237E</color>
+
+    <color name="md_secondary">#006B5C</color>
+    <color name="md_on_secondary">#FFFFFF</color>
+    <color name="md_secondary_container">#A0F0E0</color>
+    <color name="md_on_secondary_container">#002019</color>
+
+    <color name="md_tertiary">#7D5260</color>
+    <color name="md_on_tertiary">#FFFFFF</color>
+
+    <color name="md_background">#FDFBFF</color>
+    <color name="md_on_background">#1B1B1F</color>
+    <color name="md_surface">#FDFBFF</color>
+    <color name="md_on_surface">#1B1B1F</color>
+    <color name="md_surface_variant">#E2E1EC</color>
+    <color name="md_on_surface_variant">#46464F</color>
+
+    <color name="md_outline">#777680</color>
+    <color name="md_error">#BA1A1A</color>
+    <color name="md_on_error">#FFFFFF</color>
+
+    <color name="md_status_bar">#FDFBFF</color>
+    <color name="md_navigation_bar">#FDFBFF</color>
+
+    <!-- Legacy names used in code / layouts -->
+    <color name="icon_color">#5C5C66</color>
+    <color name="like_color">#C2185B</color>
+    <color name="confirm_button_color">#4E5FD9</color>
+    <color name="bottom_appbar_color">#E0E4FF</color>
+    <color name="hint_color">#6B6B75</color>
+    <color name="error_color">#BA1A1A</color>
 </resources>

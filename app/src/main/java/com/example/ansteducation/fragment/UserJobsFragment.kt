@@ -17,6 +17,7 @@ import com.example.ansteducation.auth.AppAuth
 import com.example.ansteducation.databinding.FragmentUserJobsBinding
 import com.example.ansteducation.fragment.UserProfileFragment.Companion.ARG_USER_ID
 import com.example.ansteducation.viewModel.UserJobsViewModel
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -74,6 +75,10 @@ class UserJobsFragment : Fragment() {
         viewModel.error.observe(viewLifecycleOwner) { error ->
             binding.errorText.isVisible = error != null
             binding.errorText.text = error ?: ""
+        }
+
+        viewModel.snackbarMessage.observe(viewLifecycleOwner) { msg ->
+            Snackbar.make(binding.root, msg, Snackbar.LENGTH_LONG).show()
         }
 
         if (savedInstanceState == null) {

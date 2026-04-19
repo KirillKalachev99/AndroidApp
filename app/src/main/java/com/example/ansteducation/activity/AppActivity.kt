@@ -14,7 +14,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.MenuProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.navigation.findNavController
+import androidx.navigation.NavController
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.ansteducation.R
 import com.example.ansteducation.auth.AppAuth
@@ -53,7 +54,7 @@ class AppActivity : AppCompatActivity() {
             insets
         }
 
-        val navController = findNavController(R.id.nav_host_fragment)
+        val navController = obtainNavController()
         binding.bottomNavigation.setupWithNavController(navController)
 
         firebaseMessaging.token.addOnCompleteListener { task ->
@@ -85,7 +86,7 @@ class AppActivity : AppCompatActivity() {
                     }.show()
                 return@let
             }
-            findNavController(R.id.nav_host_fragment).navigate(
+            obtainNavController().navigate(
                 R.id.action_feedFragment_to_newPostFragment,
                 Bundle().apply {
                     textArg = text
@@ -110,12 +111,12 @@ class AppActivity : AppCompatActivity() {
                 override fun onMenuItemSelected(menuItem: MenuItem): Boolean =
                     when (menuItem.itemId) {
                         R.id.signIn -> {
-                            findNavController(R.id.nav_host_fragment).navigate(R.id.authFragment)
+                            obtainNavController().navigate(R.id.authFragment)
                             true
                         }
 
                         R.id.signUp -> {
-                            findNavController(R.id.nav_host_fragment).navigate(R.id.registerFragment)
+                            obtainNavController().navigate(R.id.registerFragment)
                             true
                         }
 
@@ -126,8 +127,7 @@ class AppActivity : AppCompatActivity() {
                                 putString("userName", "")
                                 putString("userLogin", "")
                             }
-                            findNavController(R.id.nav_host_fragment)
-                                .navigate(R.id.userProfileFragment, bundle)
+                            obtainNavController().navigate(R.id.userProfileFragment, bundle)
                             true
                         }
 
@@ -140,6 +140,11 @@ class AppActivity : AppCompatActivity() {
                     }
             }
         )
+    }
+
+    private fun obtainNavController(): NavController {
+        val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        return navHost.navController
     }
 
     companion object {

@@ -19,11 +19,15 @@ import com.example.ansteducation.databinding.CardPostBinding
 import com.example.ansteducation.dto.Ad
 import com.example.ansteducation.dto.FeedItem
 import com.example.ansteducation.dto.Post
+import com.example.ansteducation.dto.likeDisplayCount
+import com.example.ansteducation.util.ServerUrls
+import com.example.ansteducation.util.formatApiDateTime
 
 
 interface OnInteractionListener {
     fun like(post: Post)
     fun share(post: Post)
+    fun onCommentsClick(post: Post)
     fun remove(post: Post)
     fun edit(post: Post)
     fun playVideo(url: String)
@@ -32,11 +36,8 @@ interface OnInteractionListener {
     fun onImageClick(post: Post, imageUrl: String)
 }
 
-typealias onItemViewListener = (post: Post) -> Unit
-
 class PostAdapter(
     private val onInteractionListener: OnInteractionListener,
-    private val onItemViewListener: onItemViewListener? = null,
 ) :
     PagingDataAdapter<FeedItem, RecyclerView.ViewHolder>(PostDiffCallback) {
 
@@ -59,7 +60,7 @@ class PostAdapter(
             R.layout.card_post -> {
                 val binding =
                     CardPostBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-                PostViewHolder(binding, onInteractionListener, onItemViewListener)
+                PostViewHolder(binding, onInteractionListener)
             }
 
             else -> error("Unknown view type: $viewType")
@@ -80,25 +81,30 @@ class AdViewHolder(
 ) : RecyclerView.ViewHolder(binding.root) {
 
     fun bind(ad: Ad) {
-        val endpointAttach = "http://10.0.2.2:9999/media/"
-        binding.apply {
-            Glide.with(root).load(endpointAttach + ad.image)
-                .timeout(30_000)
-                .into(image)
-        }
+        val fallback = ad.fallbackDrawable ?: R.drawable.ad_banner_placeholder
+        val remote = ad.image?.trim()?.takeIf { it.isNotEmpty() }
+
+        binding.root.isVisible = true
+        binding.root.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+
+        val model: Any = remote?.let { ServerUrls.media(it) } ?: fallback
+        Glide.with(binding.root)
+            .load(model)
+            .placeholder(fallback)
+            .error(fallback)
+            .timeout(15_000)
+            .centerCrop()
+            .into(binding.image)
     }
 }
 
 class PostViewHolder(
     private val binding: CardPostBinding,
     private val onInteractionListener: OnInteractionListener,
-    private val onItemViewListener: onItemViewListener?,
 ) : RecyclerView.ViewHolder(binding.root) {
 
     @SuppressLint("UseKtx")
     fun bind(post: Post) {
-        val endpointImg = "http://10.0.2.2:9999/avatars/"
-        val endpointAttach = "http://10.0.2.2:9999/media/"
         val isNormalPost = post.id > 0 && post.id < 1_000_000_000_000L
         val isSending = post.id > 1_000_000_000_000L
         val isFailed = post.id < 0
@@ -110,19 +116,21 @@ class PostViewHolder(
             attachment.visibility = View.GONE
             Glide.with(root).clear(attachment)
             Glide.with(root)
-                .load(endpointImg + post.authorAvatar)
+                .load(ServerUrls.avatar(post.authorAvatar))
                 .placeholder(R.drawable.ic_avatar_placeholder_48)
                 .error(R.drawable.ic_avatar_error_48)
                 .timeout(10_000)
                 .circleCrop()
                 .into(avatar)
             author.text = post.author
-            published.text = post.published
+            published.text = formatApiDateTime(post.published)
             content.text = post.content
             like.isEnabled = isNormalPost
+            comments.isEnabled = isNormalPost
             share.isEnabled = isNormalPost
             menu.isEnabled = isNormalPost
-            like.text = CountFormat.format(post.likes)
+            like.text = CountFormat.format(post.likeDisplayCount)
+            comments.text = CountFormat.format(post.commentCount)
             share.text = CountFormat.format(post.shares)
             seen.text = CountFormat.format(post.views)
             like.isChecked = post.likedByMe
@@ -148,51 +156,40 @@ class PostViewHolder(
                     }
                 }.show()
             }
+
             val attachmentUrl = post.attachment?.url
             if (!attachmentUrl.isNullOrEmpty()) {
                 Log.d("POST_ADAPTER", "Attachment found: $attachmentUrl")
-                Log.d("POST_ADAPTER", "Full URL: $endpointAttach$attachmentUrl")
-
-                if (attachmentUrl.isNotEmpty()) {
-                    val imageUrl = endpointAttach + post.attachment.url
-                    attachment.visibility = View.VISIBLE
-
-                    Glide.with(root)
-                        .load(imageUrl)
-                        .timeout(10_000)
-                        .into(attachment)
-
-                    attachment.setOnClickListener {
-                        onInteractionListener.onImageClick(post, imageUrl)
-                    }
-                } else {
-                    attachment.visibility = View.GONE
-                    Glide.with(root).clear(attachment)
+                val imageUrl = ServerUrls.media(post.attachment.url)
+                attachment.visibility = View.VISIBLE
+                Glide.with(root)
+                    .load(imageUrl)
+                    .timeout(10_000)
+                    .into(attachment)
+                attachment.setOnClickListener {
+                    onInteractionListener.onImageClick(post, imageUrl)
                 }
+            } else {
+                attachment.visibility = View.GONE
+                Glide.with(root).clear(attachment)
+            }
 
-
-                root.setOnClickListener {
-                    onInteractionListener.onPostClick(post)
-                }
-                refreshBotton.setOnClickListener {
-                    if (isFailed) {
-                        onInteractionListener.retryPost(post)
-                    }
-                }
-                like.setOnClickListener {
-                    onInteractionListener.like(post)
-                }
-                share.setOnClickListener {
-                    onInteractionListener.share(post)
+            root.setOnClickListener {
+                onInteractionListener.onPostClick(post)
+            }
+            refreshBotton.setOnClickListener {
+                if (isFailed) {
+                    onInteractionListener.retryPost(post)
                 }
             }
-        }
-
-        fun viewed(post: Post) {
-            if (!post.viewedByMe) {
-                itemView.post {
-                    onItemViewListener?.invoke(post)
-                }
+            like.setOnClickListener {
+                onInteractionListener.like(post)
+            }
+            comments.setOnClickListener {
+                onInteractionListener.onCommentsClick(post)
+            }
+            share.setOnClickListener {
+                onInteractionListener.share(post)
             }
         }
     }

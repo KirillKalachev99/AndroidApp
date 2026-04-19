@@ -3,6 +3,9 @@ package com.example.ansteducation.api
 
 import com.example.ansteducation.dto.Media
 import com.example.ansteducation.dto.Post
+import com.example.ansteducation.dto.CommentPayload
+import com.example.ansteducation.dto.PostComment
+import com.example.ansteducation.dto.PostPayload
 import com.example.ansteducation.dto.PushToken
 import com.example.ansteducation.dto.Token
 import okhttp3.MultipartBody
@@ -40,15 +43,15 @@ interface AuthApi {
 
 interface PostApi {
     @POST("posts")
-    suspend fun save(@Body post: Post): Post
+    suspend fun save(@Body body: PostPayload): Post
 
     @DELETE("posts/{id}")
     suspend fun deleteById(@Path("id") id: Long)
 
-    @POST("/posts/{id}/likes")
+    @POST("posts/{id}/likes")
     suspend fun likeById(@Path("id") id: Long): Post
 
-    @DELETE("/posts/{id}/likes")
+    @DELETE("posts/{id}/likes")
     suspend fun dislikeById(@Path("id") id: Long): Post
 
     @GET("posts/{id}/newer")
@@ -70,6 +73,16 @@ interface PostApi {
     @GET("posts/{id}/after")
     suspend fun getAfter(@Path("id") id: Long, @Query("count") count: Int): Response<List<Post>>
 
-    @GET("users/{id}/wall")
-    suspend fun getUserWall(@Path("id") id: Long): List<Post>
+    /** Дипломный сервер: стена пользователя — список постов по автору. */
+    @GET("posts")
+    suspend fun getPostsByAuthor(@Query("authorId") authorId: Long): List<Post>
+
+    @GET("posts/{id}")
+    suspend fun getById(@Path("id") id: Long): Post
+
+    @GET("posts/{id}/comments")
+    suspend fun getComments(@Path("id") postId: Long): List<PostComment>
+
+    @POST("posts/{id}/comments")
+    suspend fun addComment(@Path("id") postId: Long, @Body body: CommentPayload): PostComment
 }

@@ -52,26 +52,37 @@
                     android:text="@string/event_offline" />
             </RadioGroup>
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/date_button"
+                style="@style/Widget.AnStEducation.Button.Tonal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="@dimen/common_margin"
-                android:text="Select date &amp; time" />
+                android:text="@string/select_event_datetime" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/location_button"
+                style="@style/Widget.AnStEducation.Button.Tonal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="@dimen/common_margin"
-                android:text="Select location" />
+                android:text="@string/select_location" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/speakers_button"
+                style="@style/Widget.AnStEducation.Button.Tonal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="@dimen/common_margin"
-                android:text="Select speakers" />
+                android:text="@string/select_speakers" />
+
+            <EditText
+                android:id="@+id/link_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/common_margin"
+                android:hint="@string/post_link_hint"
+                android:inputType="textUri" />
 
             <FrameLayout
                 android:id="@+id/previewContainer"
@@ -85,14 +96,13 @@
                     android:adjustViewBounds="true"
                     tools:srcCompat="@tools:sample/backgrounds/scenic" />
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/removePhoto"
+                    style="@style/Widget.AnStEducation.Button.Outlined"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal|bottom"
-                    android:backgroundTint="@color/confirm_button_color"
                     android:text="@string/menu_remove"
-                    android:textColor="@color/black"
                     android:visibility="gone"
                     tools:visibility="visible" />
             </FrameLayout>
@@ -106,8 +116,7 @@
         android:layout_gravity="bottom"
         android:background="?colorSurface"
         android:gravity="center_vertical"
-        android:orientation="horizontal"
-        app:layout_behavior="@string/hide_bottom_view_on_scroll_behavior">
+        android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/add_photo"

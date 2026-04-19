@@ -45,8 +45,8 @@ interface PostDao {
         """
            UPDATE PostEntity SET
                views = views + 1,
-               viewedByMe = CASE WHEN viewedByMe THEN 0 ELSE 1 END
-           WHERE id = :id;
+               viewedByMe = 1
+           WHERE id = :id AND viewedByMe = 0
         """
     )
     suspend fun viewById(id: Long)
@@ -55,8 +55,8 @@ interface PostDao {
         """
            UPDATE PostEntity SET
                shares = shares + 1,
-               sharedByMe = sharedByMe + 1
-           WHERE id = :id;
+               sharedByMe = 1
+           WHERE id = :id
         """
     )
     suspend fun shareById(id: Long)

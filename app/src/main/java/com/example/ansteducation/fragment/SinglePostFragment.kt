@@ -1,45 +1,75 @@
 package com.example.ansteducation.fragment
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.net.toUri
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import com.example.ansteducation.R
 import com.example.ansteducation.adapter.OnInteractionListener
 import com.example.ansteducation.adapter.PostViewHolder
 import com.example.ansteducation.databinding.FragmentSinglePostBinding
 import com.example.ansteducation.dto.Post
+import com.example.ansteducation.util.SharePostWithRepostLauncher
+import com.example.ansteducation.util.formatApiDateTime
 import com.example.ansteducation.viewModel.PostViewModel
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class SinglePostFragment: Fragment() {
+class SinglePostFragment : Fragment() {
+
+    private var _binding: FragmentSinglePostBinding? = null
+    private val binding get() = _binding!!
 
     private val viewModel: PostViewModel by activityViewModels()
+    private lateinit var shareWithRepost: SharePostWithRepostLauncher
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        shareWithRepost = SharePostWithRepostLauncher(this) { viewModel.repost(it) }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val binding = FragmentSinglePostBinding.inflate(inflater, container, false)
+    ): View {
+        _binding = FragmentSinglePostBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
-        val postId = arguments?.getLong("postId") ?: findNavController().navigateUp()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        var postVh = PostViewHolder(binding.singlePost,
+        val postId = arguments?.getLong("postId") ?: run {
+            findNavController().navigateUp()
+            return
+        }
+
+        val postVh = PostViewHolder(
+            binding.singlePost,
             object : OnInteractionListener {
                 override fun like(post: Post) {
                     viewModel.like(post)
                 }
 
                 override fun share(post: Post) {
-                    viewModel.repost(post.id)
-                    sharePost(post)
+                    shareWithRepost.launch(post)
+                }
+
+                override fun onCommentsClick(post: Post) {
+                    findNavController().navigate(
+                        R.id.action_global_postCommentsFragment,
+                        bundleOf(PostCommentsFragment.ARG_POST_ID to post.id),
+                    )
                 }
 
                 override fun remove(post: Post) {
@@ -65,28 +95,81 @@ class SinglePostFragment: Fragment() {
                         putString("imageUrl", imageUrl)
                     }
                     findNavController().navigate(
-                        R.id.action_feedFragment_to_fullscreenImageFragment,
+                        R.id.action_singlePostFragment_to_fullscreenImageFragment,
                         bundle
                     )
                 }
+            }
+        )
 
-            }, null)
+        viewModel.singlePost.observe(viewLifecycleOwner) { post ->
+            binding.progress.isVisible = post == null && viewModel.singlePostError.value == null
+            if (post != null) {
+                postVh.bind(post)
+                bindExtras(post)
+            }
+        }
 
-//        val post = viewModel.data.value?.posts?.find { it.id == postId }
-//        post?.let {
-//            postVh.bind(it)
-//        }
+        viewModel.singlePostError.observe(viewLifecycleOwner) { err ->
+            binding.errorText.isVisible = err != null
+            binding.errorText.text = err.orEmpty()
+            binding.progress.isVisible = err == null && viewModel.singlePost.value == null
+        }
 
-        return binding.root
+        viewModel.snackbarMessage.observe(viewLifecycleOwner) { msg ->
+            Snackbar.make(binding.root, msg, Snackbar.LENGTH_LONG).show()
+        }
+
+        viewModel.loadPost(postId)
     }
 
-    private fun sharePost(post: Post) {
-        val intent = Intent().apply {
-            action = Intent.ACTION_SEND
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, post.content)
+    private fun bindExtras(post: Post) {
+        val jobText = post.authorJob?.takeIf { it.isNotBlank() }
+        binding.authorJob.isVisible = jobText != null
+        if (jobText != null) {
+            binding.authorJob.text = jobText
         }
-        startActivity(Intent.createChooser(intent, getString(R.string.chooser_share_post)))
+
+        val mentionLines = post.mentions.orEmpty()
+        if (mentionLines.isNotEmpty()) {
+            binding.mentionsLabel.isVisible = true
+            binding.mentionsList.isVisible = true
+            binding.mentionsList.text = mentionLines.joinToString("\n") { u ->
+                "${u.name} (@${u.login})"
+            }
+        } else {
+            binding.mentionsLabel.isVisible = false
+            binding.mentionsList.isVisible = false
+        }
+
+        val link = post.link
+        if (!link.isNullOrBlank()) {
+            binding.postLink.isVisible = true
+            binding.postLink.text = link
+            binding.postLink.setOnClickListener {
+                startActivity(Intent(Intent.ACTION_VIEW, link.toUri()))
+            }
+        } else {
+            binding.postLink.isVisible = false
+        }
+
+        val c = post.coords
+        if (c != null) {
+            binding.mapLink.isVisible = true
+            binding.mapLink.setOnClickListener {
+                val uri = Uri.parse("geo:${c.lat},${c.lon}?q=${c.lat},${c.lon}")
+                startActivity(Intent(Intent.ACTION_VIEW, uri))
+            }
+        } else {
+            binding.mapLink.isVisible = false
+        }
+
+        binding.singlePost.published.text = formatApiDateTime(post.published)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     private fun openVideoUrl(url: String) {
