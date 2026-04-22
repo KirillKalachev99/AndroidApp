@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material 3 dark -->
+    <color name="md_primary">#B4C5FF</color>
+    <color name="md_on_primary">#1F2D6B</color>
+    <color name="md_primary_container">#3A4A9A</color>
+    <color name="md_on_primary_container">#E0E4FF</color>
+
+    <color name="md_secondary">#52DBCA</color>
+    <color name="md_on_secondary">#003731</color>
+    <color name="md_secondary_container">#005048</color>
+    <color name="md_on_secondary_container">#A0F0E0</color>
+
+    <color name="md_tertiary">#EFB8C8</color>
+    <color name="md_on_tertiary">#4A2532</color>
+
+    <color name="md_background">#1B1B1F</color>
+    <color name="md_on_background">#E4E1E9</color>
+    <color name="md_surface">#1B1B1F</color>
+    <color name="md_on_surface">#E4E1E9</color>
+    <color name="md_surface_variant">#46464F</color>
+    <color name="md_on_surface_variant">#C7C5D0</color>
+
+    <color name="md_outline">#918F9A</color>
+    <color name="md_error">#FFB4AB</color>
+    <color name="md_on_error">#690005</color>
+
+    <color name="md_status_bar">#1B1B1F</color>
+    <color name="md_navigation_bar">#1B1B1F</color>
+
+    <color name="icon_color">#C7C5D0</color>
+    <color name="like_color">#FF8FA3</color>
+    <color name="confirm_button_color">#B4C5FF</color>
+    <color name="bottom_appbar_color">#2A2A32</color>
+    <color name="hint_color">#C7C5D0</color>
+    <color name="error_color">#FFB4AB</color>
+</resources>

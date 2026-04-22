@@ -1,0 +1,10 @@
+# Скопируйте в server.properties в КОРНЕ проекта (рядом с settings.gradle).
+# server.properties в .gitignore.
+#
+# Дипломный сервер (значение по умолчанию уже в app/build.gradle):
+#   serverUrl=http://94.228.125.136:8080
+#
+# Локальная разработка / эмулятор к ПК:
+#   serverUrl=http://10.0.2.2:9999
+#
+serverUrl=http://94.228.125.136:8080
