@@ -72,6 +72,7 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
+        coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
@@ -123,6 +124,7 @@ dependencies {
 
     // Google Play Services
     implementation "com.google.android.gms:play-services-base:18.5.0"
+    coreLibraryDesugaring libs.desugar.jdk.libs
 
     // Testing
     testImplementation libs.junit

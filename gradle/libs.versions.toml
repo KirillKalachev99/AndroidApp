@@ -26,6 +26,7 @@ firebase-messaging-ktx = "24.1.2"
 play-services-cast-framework = "22.2.0"
 firebase-crashlytics-buildtools = "3.0.6"
 ucrop = "2.2.11"
+desugar-jdk-libs = "2.1.5"
 
 [libraries]
 # Android
@@ -72,6 +73,7 @@ firebase-messaging-ktx = { module = "com.google.firebase:firebase-messaging-ktx"
 play-services-cast-framework = { module = "com.google.android.gms:play-services-cast-framework", version.ref = "play-services-cast-framework" }
 firebase-crashlytics-buildtools = { module = "com.google.firebase:firebase-crashlytics-buildtools", version.ref = "firebase-crashlytics-buildtools" }
 ucrop = { module = "com.github.yalantis:ucrop", version.ref = "ucrop" }
+desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar-jdk-libs" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
